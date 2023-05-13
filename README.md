@@ -23,7 +23,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 | [**Jitsuryoku!! Pro Yakyuu**](FILLME)                    | MB-MO2A              | Yes                  | Yes | **MCU W.I.P**           | No       |
 | [**Plus Alpha**](FILLME)                                 | W.I.P                | Yes                  | Yes | **MCU W.I.P**           | No       |
 | [**Saint Dragon**](FILLME)                               | W.I.P                | Yes                  | Yes | **MCU W.I.P**           | No       |
-| [**Rod-Land**](FILLME)                                   | MB-MO2A              | Yes                  | N/A | **Implemented**         | No       |
+| [**Rod-Land**](https://en.wikipedia.org/wiki/Rod_Land)   | MB-MO2A              | Yes                  | N/A | **Implemented**         | **Yes**  |
 | [**Phantasm**](FILLME)                                   | W.I.P                | Yes                  | N/A | **Implemented**         | No       |
 | [**E.D.F: Earth Defense Force (Prototpe)**](FILLME)      | W.I.P                | Yes                  | N/A | **Implemented**         | No       |
 | [**In Your Face (Prototpe)**](FILLME)                    | W.I.P                | Yes                  | N/A | **Implemented**         | No       |
@@ -44,7 +44,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 # Known Issues / Tasks
 
-- OKI playback correct samples (ROM board dependent)  **[Issue]**  
+- OKI playback; correct samples (ROM board dependent)  **[Issue]**  
 
 - Screen flip implementation  **[Task]**  
 - ~~Program CPU overclock toggle~~  **[Task]**  
@@ -76,9 +76,9 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 **Estimated geometry:**
 
-    405 pixels/line  
+    406 pixels/line  
   
-    262 lines/frame  
+    263 lines/frame  
 
 ## Main Components
 
@@ -89,6 +89,15 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 | [**Yamaha YM2151**](https://en.wikipedia.org/wiki/Yamaha_YM2151)       | OPM Sound   | **MB8842**                        |
 | [**OKI MSM6295**](https://dtsheet.com/doc/957023/oki-m6295)            | ADPCM Sound | **ROM Board<br>(See PCB Number)** |
 | [**OKI MSM6295**](https://dtsheet.com/doc/957023/oki-m6295)            | ADPCM Sound | **ROM Board<br>(See PCB Number)** |
+
+### Custom Components
+
+| Chip                            | Function                 |
+| --------------------------------|--------------------------|
+| **NEC D65005GB200**             | Custom Gate-Array / OBJ  |
+| **NEC D65005GB249**             | Custom Gate-Array / SYNC |
+| **NEC D65012GF303**             | Custom Gate-Array / VCTR |
+| **NEC D65012GF307**             | Custom Gate-Array / SCPT | <br>
 
 # Core Features
 
