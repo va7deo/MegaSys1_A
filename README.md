@@ -12,22 +12,22 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 ## Supported Titles (Type-A)
 
-| Title                                                    | PCB<br>Number        | Encrypted<br>Program | MCU | Status                  | Released |
-|----------------------------------------------------------|----------------------|----------------------|-----|-------------------------|----------|
-| [**P-47: The Freedom Fighter**](FILLME)                  | MB8844<br><br>MB8843 | N/A                  | N/A | **Implemented**         | No       |
-| [**Kick Off - Jaleco Cup**](FILLME)                      | W.I.P                | N/A                  | N/A | **Implemented**         | No       |
-| [**Shingen Samurai-Fighter / Takeda Shingen**](FILLME)   | W.I.P                | Yes                  | Yes | **MCU W.I.P**           | No       |
-| [**Ninja Kazan / Iga Ninjyutsuden**](FILLME)             | W.I.P                | Yes                  | Yes | **MCU W.I.P**           | No       |
-| [**The Astyanax / The Lord of King**](FILLME)            | MB8844<br><br>N/A    | Yes                  | Yes | **MCU W.I.P**           | No       |
-| [**Hachoo!**](FILLME)                                    | W.I.P                | Yes                  | Yes | **MCU W.I.P**           | No       |
-| [**Jitsuryoku!! Pro Yakyuu**](FILLME)                    | MB-MO2A              | Yes                  | Yes | **MCU W.I.P**           | No       |
-| [**Plus Alpha**](FILLME)                                 | W.I.P                | Yes                  | Yes | **MCU W.I.P**           | No       |
-| [**Saint Dragon**](FILLME)                               | W.I.P                | Yes                  | Yes | **MCU W.I.P**           | No       |
-| [**Rod-Land**](https://en.wikipedia.org/wiki/Rod_Land)   | MB-MO2A              | Yes                  | N/A | **Implemented**         | **Yes**  |
-| [**Phantasm**](FILLME)                                   | W.I.P                | Yes                  | N/A | **Implemented**         | No       |
-| [**E.D.F: Earth Defense Force (Prototpe)**](FILLME)      | W.I.P                | Yes                  | N/A | **Implemented**         | No       |
-| [**In Your Face (Prototpe)**](FILLME)                    | W.I.P                | Yes                  | N/A | **Implemented**         | No       |
-| [**Soldam**](FILLME)                                     | W.I.P                | Yes                  | N/A | **Implemented**         | No       |
+| Title                                                    | PCB<br>Number        | Encrypted<br>Program | MCU | Status                  | Released     |
+|----------------------------------------------------------|----------------------|----------------------|-----|-------------------------|--------------|
+| [**P-47: The Freedom Fighter**](FILLME)                  | MB8844<br><br>MB8843 | N/A                  | N/A | **Implemented**         | No           |
+| [**Kick Off - Jaleco Cup**](FILLME)                      | MB-8844              | N/A                  | N/A | **Implemented**         | No           |
+| [**Shingen Samurai-Fighter / Takeda Shingen**](FILLME)   | MB-8844              | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Ninja Kazan / Iga Ninjyutsuden**](FILLME)             | MB-8845              | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**The Astyanax / The Lord of King**](FILLME)            | MB8844<br><br>MB8845 | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Hachoo!**](FILLME)                                    | MB-8845              | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Jitsuryoku!! Pro Yakyuu**](FILLME)                    | MB-MO2A              | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Plus Alpha**](FILLME)                                 | MB-8845              | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Saint Dragon**](FILLME)                               | MB-8845              | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Rod-Land**](https://en.wikipedia.org/wiki/Rod_Land)   | MB-MO2A              | Yes                  | N/A | **Implemented**         | **20230513** |
+| [**Phantasm**](FILLME)                                   | MB-8845              | Yes                  | N/A | **Implemented**         | No           |
+| [**E.D.F: Earth Defense Force (Prototpe)**](FILLME)      | W.I.P                | Yes                  | N/A | **Implemented**         | No           |
+| [**In Your Face (Prototpe)**](FILLME)                    | W.I.P                | Yes                  | N/A | **Implemented**         | No           |
+| [**Soldam**](FILLME)                                     | W.I.P                | Yes                  | N/A | **Implemented**         | **20230519** |
 
 ## External Modules
 
@@ -49,12 +49,13 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 - Screen flip implementation  **[Task]**  
 - ~~Program CPU overclock toggle~~  **[Task]**  
 - ~~OPM / ADPCM audio mix toggles~~  **[Task]**  
-- Verify analog timings from MB8842 mother board  **[Task]**  
+- ~~Verify analog timings from MB8842 mother board~~  **[Task]**  
+- Measure HBL, VBL, H-SYNC, and V-SYNC timings from MB8842 mother board  **[Task]**  
 - ~~64-Bit SDRAM controller access for sprites  **[Task]**~~  
 - SDRAM controller run at 84MHz for integer clocking  **[Task]**  
-- Look at adding dynamic delay to SDRAM controller  **[Task]**  
+- Add dynamic delay to SDRAM controller  **[Task]**  
 - Fine tune fractional clocking for audio while running SDRAM controller at 72MHz  **[Task]**  
-- Timing issues with jtframe_mixer module; currently added to sdc and may need refactoring  **[Task]**  
+- Timing issues with jtframe_mixer module; false paths added to sdc (may need refactor?)  **[Task]**  
 
 # PCB Check List
 
@@ -62,7 +63,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 | H-Sync    | V-Sync    | Source    | PCB<br>Number |
 |-----------|-----------|-----------|---------------|
-| 14.778kHz | 56.191350 | DSLogic + | **MB8842**    |
+| 15.625kHz | 56.818181 | DSLogic + | **MB8842**    |
 
 ## Crystal Oscillators
 
@@ -76,9 +77,9 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 **Estimated geometry:**
 
-    406 pixels/line  
+    384 pixels/line  
   
-    263 lines/frame  
+    275 lines/frame  
 
 ## Main Components
 
@@ -107,8 +108,14 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 | Refresh Rate      | Timing Parameter     | HTOTAL | VTOTAL |
 |-------------------|----------------------|--------|--------|
-| 14.77kHz / 56.2Hz | MB8842               | 406    | 263    |
+| 15.63kHz / 56.8Hz | MB8842               | 384    | 275    |
 | 15.63kHz / 59.4Hz | NTSC (Closest Spec)  | 384    | 263    |
+
+- MAME information for timing parameters is incorrect.
+
+| Refresh Rate      | Timing Parameter     | HTOTAL | VTOTAL |
+|-------------------|----------------------|--------|--------|
+| 14.77kHz / 56.2Hz | MAME                 | 406    | 263    |
 
 ### P1/P2 Input Swap Option
 
@@ -130,7 +137,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 ### H/V Adjustments
 
-- There are two H/V toggles, H/V-sync positioning adjust and H/V-sync width adjust. Positioning will move the display for centering on CRT display. The sync width adjust can be used to for sync issues (rolling) without modifying the video timings.
+- There are two H/V toggles, H/V-sync positioning adjust and H/V-sync width adjust. Positioning will move the display for centering on CRT display. The sync width adjust can be used to for sync issues (rolling, flagging etc) without modifying the video timings.
 
 ### Scandoubler Options
 
@@ -140,9 +147,10 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 # PCB Information / Control Layout
 
-| Title         | Joystick | Service Menu                                                                                                  | Dip Switches                                                                                               | Shared Controls | Dip Default | PCB Information                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-|---------------|----------|---------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|-----------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Title         | Joystick | Service Menu                                                                                                  | Dip Switches                                                                                               | Shared Controls | Dip Default | PCB Information                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+|---------------|----------|---------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|-----------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Rod-Land**  | 8-Way    | [**Service Menu**](https://github.com/va7deo/MegaSys1_A/assets/32810066/6b35c179-4f39-4044-94f8-8eaaca18737b) | [**Dip Sheet**](https://github.com/va7deo/MegaSys1_A/assets/32810066/4b649233-2e51-460d-b7c9-5a51b3345455) | Co-Op           | N/A         | Toggling the "Chapter" dipswitch will go from the "First Story (Rescue My Mom)" to the "Second Story (The Unknown Pyramid)". <br><br> You can also insert a coin and press up, up, up, down, down, down, start to enable the second story or up, up, up, down, down, down start to return to the first story on English versions. <br><br> For Japanese versions, the code is reversed for accessing the second story and returning to the first. <br><br> There are three endings to Rod-Land, complete the 31 levels in the first story or second; for the special ending, play either story by inputing the secret code and beating the extra level (32). |
+| **Soldam**    | 8-Way    | [**Service Menu**](https://github.com/va7deo/MegaSys1_A/assets/32810066/57338099-4e76-4973-afb2-7a3141252bb0) | [**Dip Sheet**](https://github.com/va7deo/MegaSys1_A/assets/32810066/0ebbb6b7-2613-4f0e-9174-93e1b2057bd1) | Versus          | N/A         | N/A                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ### Keyboard Handler
 

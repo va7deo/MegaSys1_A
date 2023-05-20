@@ -329,6 +329,8 @@ end
 
 localparam RODLAND  = 3;
 localparam RODLANDJ = 4;
+localparam SOLDAM   = 7;
+localparam SOLDAMJ  = 8;
 
 reg [23:0] prom [0:15];
 
@@ -817,13 +819,15 @@ endfunction
 
 //localparam RODLAND  = 3;  rodland
 //localparam RODLANDJ = 4;  astyanax
+//localparam SOLDAM   = 7;  phantasm
+//localparam SOLDAMJ  = 8;  astyanax
 
 function [15:0] cpu_decode(input [23:0] i, input [15:0] d);
 begin
     if ( pcb == 0 || pcb == 1 ) begin
         // p47 & kickoff are not encrypted
         cpu_decode = d;
-    end else if ( pcb == 2 || pcb == 5 || pcb == 7 || pcb == 8 || pcb == 9 || pcb == 10 ) begin
+    end else if ( pcb == 2 || pcb == 5 || pcb == 7 || pcb == 9 || pcb == 10 ) begin
         // phantasm
         if          ( i < 20'h04000 ) begin
             cpu_decode = ( i[8] & i[5] & i[2] ) ? swap_01( d ) : swap_00( d );
@@ -1107,7 +1111,7 @@ wire m68kp_layer_cs;
 wire m68kp_scr0_reg_cs;
 wire m68kp_scr1_reg_cs;
 wire m68kp_scr2_reg_cs;
-    
+
 wire m68kp_scr0_cs;
 wire m68kp_scr1_cs;
 wire m68kp_scr2_cs;

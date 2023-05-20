@@ -36,7 +36,7 @@ module chip_select
     output reg m68kp_spr_cs,
     output reg m68kp_spr_ctrl_cs,
     output reg m68kp_scr_ctrl_cs,
-    
+
     output reg m68kp_latch0_cs,
     output reg m68kp_latch1_cs,
 
@@ -69,6 +69,8 @@ endfunction
 
 localparam RODLAND  = 3;
 localparam RODLANDJ = 4;
+localparam SOLDAM   = 7;
+localparam SOLDAMJ  = 8;
 
 always @ (*) begin
     // Memory mapping based on PCB type
@@ -95,13 +97,12 @@ always @ (*) begin
             m68kp_scr0_reg_cs   <= m68kp_cs( 24'h084200, 24'h084205 );
             m68kp_scr1_reg_cs   <= m68kp_cs( 24'h084208, 24'h08420d );
             m68kp_scr2_reg_cs   <= m68kp_cs( 24'h084008, 24'h08400d );
-            
+
             m68kp_scr0_cs   <= m68kp_cs( 24'h090000, 24'h093fff );
             m68kp_scr1_cs   <= m68kp_cs( 24'h094000, 24'h097fff );
             m68kp_scr2_cs   <= m68kp_cs( 24'h098000, 24'h09bfff );
 
             m68kp_ram_cs    <= m68kp_cs( 24'h0f0000, 24'h0fffff );
-
 
             // sound
             m68ks_rom_cs    <= m68ks_cs( 24'h000000, 24'h01ffff );
