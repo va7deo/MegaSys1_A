@@ -258,11 +258,11 @@ localparam CONF_STR = {
     "P2-;",
     "P2OC,Audio Mix,Mono,Stereo;",
     "P2-;",
-    "P2OB,OPM/ADPCM Audio,On,Off;",
-    "P2-;",
-    "P2oBC,ADPCM-0 Volume,Default,50%,25%,Off;",
-    "P2oDE,ADPCM-1 Volume,Default,50%,25%,Off;",
-    "P2oFG,OPM Volume,Default,50%,25%,Off;",
+    //"P2OB,OPM/ADPCM Audio,On,Off;",
+    //"P2-;",
+    "P2oBC,ADPCM-0 Volume,Default,50%,75%,Off;",
+    "P2oDE,ADPCM-1 Volume,Default,50%,75%,Off;",
+    "P2oFG,OPM Volume,Default,50%,75%,Off;",
     "P2-;",
     "-;",
     "P3,Core Options;",
@@ -283,7 +283,7 @@ localparam CONF_STR = {
 wire hps_forced_scandoubler;
 wire forced_scandoubler = hps_forced_scandoubler | status[10];
 
-wire  [2:0] buttons;
+wire  [1:0] buttons;
 wire [63:0] status;
 wire [10:0] ps2_key;
 wire [15:0] joy0, joy1;
@@ -329,6 +329,7 @@ end
 
 localparam RODLAND  = 3;
 localparam RODLANDJ = 4;
+localparam ASTYANAX = 6;
 localparam SOLDAM   = 7;
 localparam SOLDAMJ  = 8;
 
@@ -371,8 +372,8 @@ reg [15:0] dsw;
 reg [15:0] system;
 
 always @ (posedge clk_sys ) begin
-        p1   <=  ~{ start1, p1_buttons[2:0], p1_up, p1_down, p1_left, p1_right };
-        p2   <=  ~{ start2, p2_buttons[2:0], p2_up, p2_down, p2_left, p2_right };
+        p1   <=  ~{ start1, p1_buttons[3:0], p1_up, p1_down, p1_left, p1_right };
+        p2   <=  ~{ start2, p2_buttons[3:0], p2_up, p2_down, p2_left, p2_right };
         dsw <= { sw[0], sw[1] };
         system <= ~{ 8'h00, coin_b, coin_a, service, 3'b0, start2, start1 };
 end
@@ -383,13 +384,13 @@ reg        p1_right;
 reg        p1_left;
 reg        p1_down;
 reg        p1_up;
-reg [2:0]  p1_buttons;
+reg [3:0]  p1_buttons;
 
 reg        p2_right;
 reg        p2_left;
 reg        p2_down;
 reg        p2_up;
-reg [2:0]  p2_buttons;
+reg [3:0]  p2_buttons;
 
 reg start1;
 reg start2;
@@ -406,36 +407,38 @@ always @ * begin
         p1_left    <= joy0[1]   | key_p1_left;
         p1_down    <= joy0[2]   | key_p1_down;
         p1_up      <= joy0[3]   | key_p1_up;
-        p1_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+        p1_buttons <= joy0[7:4] | { key_p1_d, key_p1_c, key_p1_b, key_p1_a };
 
         p2_right   <= joy1[0]   | key_p2_right;
         p2_left    <= joy1[1]   | key_p2_left;
         p2_down    <= joy1[2]   | key_p2_down;
         p2_up      <= joy1[3]   | key_p2_up;
-        p2_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+        p2_buttons <= joy1[7:4] | { key_p2_d, key_p2_c, key_p2_b, key_p2_a };
     end else begin
         p2_right   <= joy0[0]   | key_p1_right;
         p2_left    <= joy0[1]   | key_p1_left;
         p2_down    <= joy0[2]   | key_p1_down;
         p2_up      <= joy0[3]   | key_p1_up;
-        p2_buttons <= joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+        p2_buttons <= joy0[7:4] | { key_p1_d, key_p1_c, key_p1_b, key_p1_a };
 
         p1_right   <= joy1[0]   | key_p2_right;
         p1_left    <= joy1[1]   | key_p2_left;
         p1_down    <= joy1[2]   | key_p2_down;
         p1_up      <= joy1[3]   | key_p2_up;
-        p1_buttons <= joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+        p1_buttons <= joy1[7:4] | { key_p2_d, key_p2_c, key_p2_b, key_p2_a };
     end
 end
 
 always @ * begin
-        start1    <= joy0[7]  | joy1[7]  | key_start_1p;
-        start2    <= joy0[8]  | joy1[8]  | key_start_2p;
+        start1    <= joy0[8]  | joy1[8]  | key_start_1p;
+        start2    <= joy0[9]  | joy1[9]  | key_start_2p;
 
-        coin_a    <= joy0[9]  | joy1[9]  | key_coin_a;
-        coin_b    <= joy0[10] | joy1[10] | key_coin_b;
+        coin_a    <= joy0[10] | joy1[10] | key_coin_a;
+        coin_b    <= joy0[11] | joy1[11] | key_coin_b;
 
-        b_pause   <= joy0[11] | key_pause;
+        service   <= key_service;
+
+        b_pause   <= joy0[12] | joy1[12] | key_pause;
 end
 
 // Keyboard handler
@@ -443,8 +446,8 @@ end
 reg key_start_1p, key_start_2p, key_coin_a, key_coin_b;
 reg key_tilt, key_test, key_reset, key_service, key_pause;
 
-reg key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c;
-reg key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c;
+reg key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
+reg key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c, key_p2_d;
 
 wire pressed = ps2_key[9];
 
@@ -470,6 +473,7 @@ always @(posedge clk_sys) begin
             'h014 :  key_p1_a       <= pressed;            // lctrl
             'h011 :  key_p1_b       <= pressed;            // lalt
             'h029 :  key_p1_c       <= pressed;            // spacebar
+            'h012 :  key_p1_d       <= pressed;            // lshift
 
             'h02D :  key_p2_up      <= pressed;            // r
             'h02B :  key_p2_down    <= pressed;            // f
@@ -478,6 +482,7 @@ always @(posedge clk_sys) begin
             'h01C :  key_p2_a       <= pressed;            // a
             'h01B :  key_p2_b       <= pressed;            // s
             'h015 :  key_p2_c       <= pressed;            // q
+            'h01d :  key_p2_d       <= pressed;            // w
         endcase
     end
 end
@@ -819,6 +824,7 @@ endfunction
 
 //localparam RODLAND  = 3;  rodland
 //localparam RODLANDJ = 4;  astyanax
+//localparam ASTYANAX = 6;  astyanax
 //localparam SOLDAM   = 7;  phantasm
 //localparam SOLDAMJ  = 8;  astyanax
 
@@ -1090,7 +1096,7 @@ fx68k sound_cpu
 
     .IPL0n(m68ks_ipl0_n),
     .IPL1n(m68ks_ipl1_n),
-    .IPL2n(m68ks_ipl2_n),
+    .IPL2n(ym2151_irq_n), // m68ks_ipl2_n
 
     // busses
     .iEdb(m68ks_din),
@@ -1210,6 +1216,13 @@ always @ (posedge clk_sys) begin
         layer_enable <= 0;
         sprite_control <= 0;
         sound_cpu_reset <= 0;
+
+        mcu_en <= 0;
+        mcu_ram[0] <= 0;
+        mcu_ram[1] <= 0;
+        mcu_ram[2] <= 0;
+        mcu_ram[3] <= 0;
+        mcu_ram[4] <= 0;
 //        dtack_count <= 0;
     end else begin
         // vblank handling
@@ -1217,7 +1230,7 @@ always @ (posedge clk_sys) begin
         if ( hbl_sr == 2'b01 ) begin // rising edge
             //  68k interrupts
             //  mcu may alter irq timing
-            if (          vc == 8'he0 ) begin  // vblank start
+            if (          vc == 8'hf0 ) begin  // vblank start
                 // irq 2
                 m68kp_ipl1_n <= 0;
             end else if ( vc == 8'h10 ) begin  // vblank end
@@ -1238,7 +1251,7 @@ always @ (posedge clk_sys) begin
             end
             if ( m68kp_rw == 1 ) begin
                 // reads
-                m68kp_din <= m68kp_rom_cs      ? m68kp_rom_dout :
+                m68kp_din <= m68kp_rom_cs      ? mcu_rom : // m68kp_rom_dout :
                              m68kp_ram_cs      ? m68kp_ram_dout :
                              m68kp_spr_cs      ? sprite_dout  :
                              m68kp_latch1_cs   ? m68ks_latch1 :
@@ -1256,6 +1269,15 @@ always @ (posedge clk_sys) begin
                              m68kp_spr_ctrl_cs ? sprite_control :
                              16'h0000;
             end else begin
+                    // mcu handling
+                    if ( pcb == ASTYANAX && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
+                        if (mcu_ram[0] == 16'h00ff && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h0000 ) begin
+                            mcu_en <= 1 ;
+                        end else begin
+                            mcu_en <= 0 ;
+                        end
+                        mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
+                    end
                 // writes
                 if ( m68kp_latch0_cs == 1 ) begin
                     // sound latch
@@ -1299,7 +1321,7 @@ always @ (posedge clk_sys) begin
         end        // clk_cpu_p
                    // m68ks_rom_valid forced hi. no need for rom dtack since bram is used
                    // dtack is for audio
-        m68ks_dtack_n <= ( m68ks_ym2151_cs & ym2151_dout[7] );
+        m68ks_dtack_n <= ( m68ks_ym2151_cs & ym2151_dout[7] ) | (oki0_rom_cs & ~oki0_rom_done) | (oki1_rom_cs & ~oki1_rom_done);
         if ( m68ks_ym2151_cs == 0 || m68ks_rw == 1 ) begin
             ym2151_w <= 0;
         end
@@ -1341,6 +1363,28 @@ always @ (posedge clk_sys) begin
         end        // clk_cpu_s
     end            // reset
 end                // always
+
+// if (m_mcu_hs && ((m_mcu_hs_ram[4] ) & 0xfff) == (offset>>5 & 0xfff))
+// {
+// return 0x889e;
+// }
+
+always @ * begin
+    mcu_rom = m68kp_rom_dout ;
+    if ( pcb == ASTYANAX ) begin
+        if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h03FFC0 && m68kp_a[23:0] < 24'h040000 ) begin
+            mcu_rom = 16'h889e;
+        end 
+    end else if ( pcb == STDRAGON ) begin
+        if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h00CF80 && m68kp_a[23:0] < 24'h00CF82 ) begin
+            mcu_rom = 16'h835d;
+        end 
+    end
+end
+
+reg          mcu_en;
+wire [15:0]  mcu_rom;
+reg  [15:0]  mcu_ram [0:15];
 
 reg  m68ks_dtack_n;
 
@@ -1388,7 +1432,7 @@ wire  [7:0] oki0_dout;
 reg         oki0_w;
 wire signed [13:0] oki0_sample;
 reg         oki0_rom_cs;
-reg  [15:0] oki0_rom_prev_addr;
+reg  [17:0] oki0_rom_prev_addr;
 reg         oki0_rom_done;
 wire        oki0_sample_clk;
 
@@ -1455,7 +1499,7 @@ wire  [7:0] oki1_dout;
 reg         oki1_w;
 wire signed [13:0] oki1_sample;
 reg         oki1_rom_cs;
-reg  [15:0] oki1_rom_prev_addr;
+reg  [17:0] oki1_rom_prev_addr;
 reg         oki1_rom_done;
 wire        oki1_sample_clk;
 
@@ -1478,7 +1522,7 @@ jt6295 #(.INTERPOL(0)) oki_1
     .sample( oki1_sample_clk )
 );
 
-wire      audio_en   = status[11];       // audio enable
+//wire      audio_en   = status[11];       // audio enable
 wire      stereo_en  = status[12];       // mono to stereo toggle
 
 wire [1:0] pcm0_level  = status[44:43]; // oki0 audio mix
@@ -1498,23 +1542,23 @@ always @( posedge clk_sys, posedge reset ) begin
         fm_mult<=0;
     end else begin
     case( pcm0_level )
-        0: pcm0_mult <= 8'h0c;    // 75%
+        0: pcm0_mult <= 8'h04;    // 25%
         1: pcm0_mult <= 8'h08;    // 50%
-        2: pcm0_mult <= 8'h04;    // 25%
+        2: pcm0_mult <= 8'h0c;    // 75%
         3: pcm0_mult <= 8'h0;     // 0%
     endcase
 
     case( pcm1_level )
-        0: pcm1_mult <= 8'h0c;    // 75%
+        0: pcm1_mult <= 8'h04;    // 25%
         1: pcm1_mult <= 8'h08;    // 50%
-        2: pcm1_mult <= 8'h04;    // 25%
+        2: pcm1_mult <= 8'h0c;    // 75%
         3: pcm1_mult <= 8'h0;     // 0%
     endcase
 
     case( fm_level )
-        0: fm_mult <= 8'h0c;    // 75%
+        0: fm_mult <= 8'h04;    // 25%
         1: fm_mult <= 8'h08;    // 50%
-        2: fm_mult <= 8'h04;    // 25%
+        2: fm_mult <= 8'h0c;    // 75%
         3: fm_mult <= 8'h0;     // 0%
     endcase
     end
@@ -1576,22 +1620,22 @@ jtframe_mixer #(.W0(16), .W1(16), .WOUT(16)) u_mix_mono(
     .ch2    (              ),
     .ch3    (              ),
     // gain for each channel in 4.4 fixed point format
-    .gain0  ( 8'h0e        ),
-    .gain1  ( 8'h0e        ),
-    .gain2  ( 0            ),
-    .gain3  ( 0            ),
+    .gain0  ( 8'h0c        ),    // 75%
+    .gain1  ( 8'h0c        ),    // 75%
+    .gain2  ( 8'd0         ),
+    .gain3  ( 8'd0         ),
     .mixed  ( mono         ),
     .peak   (              )
 );
 
 always @ * begin
-    if ( audio_en == 0 ) begin
+    if ( pause_cpu == 1 ) begin
+        AUDIO_L <= 0;
+        AUDIO_R <= 0;
+    end else begin
         // mix audio
         AUDIO_L <= left_mixed;
         AUDIO_R <= right_mixed;
-    end else begin
-        AUDIO_L <= 0;
-        AUDIO_R <= 0;
     end
 end
 
@@ -1734,10 +1778,10 @@ always @ (posedge clk_sys) begin
                             3: scroll0_addr_r <= { scroll0_y[11:8], scroll0_x[ 8:4], scroll0_y[7:4] };  //[0][3] 512x4096
 
                             // 8x8
-                            4: scroll0_addr_r <= {                  scroll0_x[11:3], scroll0_y[7:3] };  //[1][0] 2048x256
-                            5: scroll0_addr_r <= { scroll0_y[8],    scroll0_x[10:3], scroll0_y[7:3] };  //[1][1] 1024x512
-                            6: scroll0_addr_r <= { scroll0_y[8],    scroll0_x[10:3], scroll0_y[7:3] };  //[1][2] 1024x512
-                            7: scroll0_addr_r <= { scroll0_y[9:8],  scroll0_x[ 9:3], scroll0_y[7:3] };  //[1][3] 512x1024
+                            4: scroll0_addr_r <= {                  scroll0_x[10:3], scroll0_y[7:3] };  //[1][0] 2048x256
+                            5: scroll0_addr_r <= { scroll0_y[8],    scroll0_x[ 9:3], scroll0_y[7:3] };  //[1][1] 1024x512
+                            6: scroll0_addr_r <= { scroll0_y[8],    scroll0_x[ 8:3], scroll0_y[7:3] };  //[1][2] 1024x512
+                            7: scroll0_addr_r <= { scroll0_y[9:8],  scroll0_x[ 7:3], scroll0_y[7:3] };  //[1][3] 512x1024
                         endcase
                     end
                     1: begin
@@ -1749,10 +1793,10 @@ always @ (posedge clk_sys) begin
                             3: scroll1_addr_r <= { scroll1_y[11:8], scroll1_x[ 8:4], scroll1_y[7:4] };
 
                             // 8x8
-                            4: scroll1_addr_r <= {                  scroll1_x[11:3], scroll1_y[7:3] };
-                            5: scroll1_addr_r <= { scroll1_y[8],    scroll1_x[10:3], scroll1_y[7:3] };
-                            6: scroll1_addr_r <= { scroll1_y[8],    scroll1_x[10:3], scroll1_y[7:3] };
-                            7: scroll1_addr_r <= { scroll1_y[9:8],  scroll1_x[ 9:3], scroll1_y[7:3] };
+                            4: scroll1_addr_r <= {                  scroll1_x[10:3], scroll1_y[7:3] };
+                            5: scroll1_addr_r <= { scroll1_y[8],    scroll1_x[ 9:3], scroll1_y[7:3] };
+                            6: scroll1_addr_r <= { scroll1_y[8],    scroll1_x[ 8:3], scroll1_y[7:3] };
+                            7: scroll1_addr_r <= { scroll1_y[9:8],  scroll1_x[ 7:3], scroll1_y[7:3] };
                         endcase
                     end
                     2: begin
@@ -1764,10 +1808,10 @@ always @ (posedge clk_sys) begin
                             3: scroll2_addr_r <= { scroll2_y[11:8], scroll2_x[ 8:4], scroll2_y[7:4] };
 
                             // 8x8
-                            4: scroll2_addr_r <= {                  scroll2_x[11:3], scroll2_y[7:3] };
-                            5: scroll2_addr_r <= { scroll2_y[8],    scroll2_x[10:3], scroll2_y[7:3] };
-                            6: scroll2_addr_r <= { scroll2_y[8],    scroll2_x[10:3], scroll2_y[7:3] };
-                            7: scroll2_addr_r <= { scroll2_y[9:8],  scroll2_x[ 9:3], scroll2_y[7:3] };
+                            4: scroll2_addr_r <= {                  scroll2_x[10:3], scroll2_y[7:3] };
+                            5: scroll2_addr_r <= { scroll2_y[8],    scroll2_x[ 9:3], scroll2_y[7:3] };
+                            6: scroll2_addr_r <= { scroll2_y[8],    scroll2_x[ 9:3], scroll2_y[7:3] };
+                            7: scroll2_addr_r <= { scroll2_y[9:8],  scroll2_x[ 8:3], scroll2_y[7:3] };
                         endcase
                     end
                 endcase
@@ -2414,11 +2458,11 @@ reg  [15:0] sprite_rom_addr;
 wire [63:0] sprite_rom_dout;
 wire        sprite_rom_valid;
 
-reg  [15:0] oki0_rom_addr;
+reg  [17:0] oki0_rom_addr;
 wire [ 7:0] oki0_rom_dout;
 wire        oki0_rom_valid;
 
-reg  [15:0] oki1_rom_addr;
+reg  [17:0] oki1_rom_addr;
 wire [ 7:0] oki1_rom_dout;
 wire        oki1_rom_valid;
 
