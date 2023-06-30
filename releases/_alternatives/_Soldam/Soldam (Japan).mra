@@ -25,7 +25,7 @@
         <dip name="Flip Screen" bits="15" ids="On,Off"/>
     </switches>
 
-    <buttons names="Rotate Left,Rotate Right,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,Start"/>
+    <buttons names="Rotate Left,Rotate Right,-,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,Start"/>
 
     <rom index="1">
         <part>08</part>

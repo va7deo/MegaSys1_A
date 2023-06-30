@@ -1,9 +1,9 @@
 
 # Jaleco Mega System 1 A FPGA Implementation
 
-FPGA compatible core of Jaleco's Mega System 1 A (P-47 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O) and verified against a authentic P-47: The Freedom Fighter PCB purchased by [**atrac17**](https://github.com/atrac17).
+FPGA compatible core of Jaleco's Mega System 1 A (P-47 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O) with assistance from [**atrac17**](https://github.com/atrac17). Verified against a authentic P-47: The Freedom Fighter PCB purchased by [**atrac17**](https://github.com/atrac17).
 
-The intent is for this core to be a 1:1 playable implementation of the Mega System 1 A arcade hardware. Currently in **beta state**, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17). Additional Mega System 1 arcade titles will be in separate repositories (Rev Z/B/C).
+The intent is for this core to be a 1:1 playable implementation of the Mega System 1 A arcade hardware. Currently in **beta state**, this core is in active development. Additional Mega System 1 arcade titles will be in separate repositories (Mega System 1 Rev Z/B/C).
 
 <br>
 <p align="center">
@@ -15,16 +15,16 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 | Title                                                    | PCB<br>Number        | Encrypted<br>Program | MCU | Status                  | Released     |
 |----------------------------------------------------------|----------------------|----------------------|-----|-------------------------|--------------|
 | [**P-47: The Freedom Fighter**](FILLME)                  | MB8844<br><br>MB8843 | N/A                  | N/A | **Implemented**         | No           |
-| [**Kick Off - Jaleco Cup**](FILLME)                      | MB-8844              | N/A                  | N/A | **Implemented**         | No           |
-| [**Shingen Samurai-Fighter / Takeda Shingen**](FILLME)   | MB-8844              | Yes                  | Yes | **MCU W.I.P**           | No           |
-| [**Ninja Kazan / Iga Ninjyutsuden**](FILLME)             | MB-8845              | Yes                  | Yes | **MCU W.I.P**           | No           |
-| [**The Astyanax / The Lord of King**](FILLME)            | MB8844<br><br>MB8845 | Yes                  | Yes | **MCU W.I.P**           | No           |
-| [**Hachoo!**](FILLME)                                    | MB-8845              | Yes                  | Yes | **MCU W.I.P**           | No           |
-| [**Jitsuryoku!! Pro Yakyuu**](FILLME)                    | MB-MO2A              | Yes                  | Yes | **MCU W.I.P**           | No           |
-| [**Plus Alpha**](FILLME)                                 | MB-8845              | Yes                  | Yes | **MCU W.I.P**           | No           |
-| [**Saint Dragon**](FILLME)                               | MB-8845              | Yes                  | Yes | **MCU W.I.P**           | No           |
-| [**Rod-Land**](https://en.wikipedia.org/wiki/Rod_Land)   | MB-MO2A              | Yes                  | N/A | **Implemented**         | **20230513** |
-| [**Phantasm**](FILLME)                                   | MB-8845              | Yes                  | N/A | **Implemented**         | No           |
+| [**Kick Off - Jaleco Cup**](FILLME)                      | MB8844               | N/A                  | N/A | **Implemented**         | No           |
+| [**Shingen Samurai-Fighter / Takeda Shingen**](FILLME)   | MB8844               | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Ninja Kazan / Iga Ninjyutsuden**](FILLME)             | MB8845               | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**The Astyanax / The Lord of King**](FILLME)            | MB8844<br><br>MB8845 | Yes                  | Yes | **Implemented**         | No           |
+| [**Hachoo!**](FILLME)                                    | MB8845               | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Jitsuryoku!! Pro Yakyuu**](FILLME)                    | MBMO2A               | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Plus Alpha**](FILLME)                                 | MB8845               | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Saint Dragon**](FILLME)                               | MB8845               | Yes                  | Yes | **MCU W.I.P**           | No           |
+| [**Rod-Land**](https://en.wikipedia.org/wiki/Rod_Land)   | MBMO2A               | Yes                  | N/A | **Implemented**         | **20230513** |
+| [**Phantasm**](FILLME)                                   | MB8845               | Yes                  | N/A | **Implemented**         | No           |
 | [**E.D.F: Earth Defense Force (Prototpe)**](FILLME)      | W.I.P                | Yes                  | N/A | **Implemented**         | No           |
 | [**In Your Face (Prototpe)**](FILLME)                    | W.I.P                | Yes                  | N/A | **Implemented**         | No           |
 | [**Soldam**](FILLME)                                     | W.I.P                | Yes                  | N/A | **Implemented**         | **20230519** |
@@ -44,7 +44,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 # Known Issues / Tasks
 
-- OKI playback; correct samples (ROM board dependent)  **[Issue]**  
+- ~~OKI playback; correct samples (ROM board dependent)~~  **[Issue]**  
 
 - Screen flip implementation  **[Task]**  
 - ~~Program CPU overclock toggle~~  **[Task]**  
@@ -63,7 +63,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 | H-Sync    | V-Sync    | Source    | PCB<br>Number |
 |-----------|-----------|-----------|---------------|
-| 15.625kHz | 56.818181 | DSLogic + | **MB8842**    |
+| 15.625kHz | 56.205035 | DSLogic + | **MB8842**    |
 
 ## Crystal Oscillators
 
@@ -79,7 +79,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
     384 pixels/line  
   
-    275 lines/frame  
+    278 lines/frame  
 
 ## Main Components
 
@@ -108,7 +108,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 | Refresh Rate      | Timing Parameter     | HTOTAL | VTOTAL |
 |-------------------|----------------------|--------|--------|
-| 15.63kHz / 56.8Hz | MB8842               | 384    | 275    |
+| 15.63kHz / 56.2Hz | MB8842               | 384    | 278    |
 | 15.63kHz / 59.4Hz | NTSC (Closest Spec)  | 384    | 263    |
 
 - MAME information for timing parameters is incorrect.
@@ -166,7 +166,7 @@ The intent is for this core to be a 1:1 playable implementation of the Mega Syst
 
 |Player 1|Player 2|
 |--|--|
-|<table> <tr><th>Functions</th><th>Keymap</th></tr><tr><td>P1 Up</td><td>Up</td></tr><tr><td>P1 Down</td><td>Down</td></tr><tr><td>P1 Left</td><td>Left</td></tr><tr><td>P1 Right</td><td>Right</td></tr><tr><td>P1 Bttn 1</td><td>L-Ctrl</td></tr><tr><td>P1 Bttn 2</td><td>L-Alt</td></tr><tr><td>P1 Bttn 3</td><td>Space</td></tr> </table> | <table> <tr><th>Functions</th><th>Keymap</th></tr><tr><td>P2 Up</td><td>R</td></tr><tr><td>P2 Down</td><td>F</td></tr><tr><td>P2 Left</td><td>D</td></tr><tr><td>P2 Right</td><td>G</td></tr><tr><td>P2 Bttn 1</td><td>A</td></tr><tr><td>P2 Bttn 2</td><td>S</td></tr><tr><td>P2 Bttn 3</td><td>Q</td></tr> </table>|
+|<table> <tr><th>Functions</th><th>Keymap</th></tr><tr><td>P1 Up</td><td>Up</td></tr><tr><td>P1 Down</td><td>Down</td></tr><tr><td>P1 Left</td><td>Left</td></tr><tr><td>P1 Right</td><td>Right</td></tr><tr><td>P1 Bttn 1</td><td>L-Ctrl</td></tr><tr><td>P1 Bttn 2</td><td>L-Alt</td></tr><tr><td>P1 Bttn 3</td><td>Space</td></tr><tr><td>P1 Bttn 4</td><td>L-Shift</td></tr> </table> | <table> <tr><th>Functions</th><th>Keymap</th></tr><tr><td>P2 Up</td><td>R</td></tr><tr><td>P2 Down</td><td>F</td></tr><tr><td>P2 Left</td><td>D</td></tr><tr><td>P2 Right</td><td>G</td></tr><tr><td>P2 Bttn 1</td><td>A</td></tr><tr><td>P2 Bttn 2</td><td>S</td></tr><tr><td>P2 Bttn 3</td><td>Q</td></tr><tr><td>P2 Bttn 4</td><td>W</td></tr> </table>|
 
 # Support
 

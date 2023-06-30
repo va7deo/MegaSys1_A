@@ -23,7 +23,7 @@
         <dip name="Screen Display" bits="15" ids="Reverse,Normal"/>
     </switches>
 
-    <buttons names="Rod,Ladder,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,Start"/>
+    <buttons names="Rod,Ladder,-,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,Start"/>
 
     <rom index="1">
         <part>06</part>
