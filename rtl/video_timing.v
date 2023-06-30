@@ -36,7 +36,7 @@ wire [8:0] VBL_START  = 240;
 wire [8:0] VBL_END    = 16;
 wire [8:0] VS_START   = VBL_START + 13 + $signed(vs_offset);
 wire [8:0] VS_END     = VBL_START + 21 + $signed(vs_offset) + $signed(vs_width);
-wire [8:0] VTOTAL     = ( refresh_mod ? 262 : 274 );
+wire [8:0] VTOTAL     = ( refresh_mod ? 262 : 277 );
 
 
 reg [8:0] v;
