@@ -1944,25 +1944,8 @@ always @ (posedge clk_sys) begin
             sprite_type <= 2'h0;
             sprite_control_latch <= sprite_control;
         end else if ( sprite_state == 1) begin
-            if ( sprite_control_latch[4] == 1 ) begin
-                // skip framebuffer clear?
-                sprite_state <= 3;
-            end else begin
-                // clear sprite framebuffer ( takes ~1ms or 15 scanlines.. 23 lines during vbl )
-                // could be done line by line after mixed with scroll layers?
-                framebuf_addr <= 0;
-                framebuf_din  <= 15; // 0;
-                //framebuf_w    <= 1;
-                framebuf_w    <= 0;
-                sprite_state  <= 2;
-            end
-        end else if ( sprite_state == 2) begin
-            if ( framebuf_addr < 16'hffff ) begin
-                framebuf_addr <= framebuf_addr + 1;
-            end else begin
-                framebuf_w   <= 0;
-                sprite_state <= 3;  // done
-            end
+            framebuf_w    <= 0;
+            sprite_state  <= 3;
         end else if ( sprite_state == 3) begin
             // are sprites disabled?
             if ( layer_enable[3] == 0 ) begin
@@ -1971,7 +1954,7 @@ always @ (posedge clk_sys) begin
                 sprite_idx <= 8'hff;
                 sprite_state <= 30;
             end else begin
-                sprite_idx <= 8'h00; // start at last sprite.  draw in reverse order
+                sprite_idx <= 8'h00;
                 sprite_state <= 4;
             end
         end else if ( sprite_state == 4) begin 
@@ -2123,14 +2106,14 @@ reg   [3:0] spr_x;
 //reg   [3:0] pen;
 //reg         pen_valid;
 
-wire [7:0] fb_vc = vc[7:0] - 1; //+ 8'h10;
+wire [8:0] fb_vc = vc[7:0] - 1; //+ 8'h10;
 
 reg  [3:0] sprite_priority_hi;
 reg  [3:0] sprite_priority_lo;
 
 always @ (posedge clk_sys) begin
 
-    if ( hc < 257 ) begin
+    if ( hc < 242 ) begin
         if ( clk6_count == 2 ) begin
             line_buf_addr_r <= { vc[0], 1'b0, hc[7:0] };
         end else if ( clk6_count == 3 ) begin
