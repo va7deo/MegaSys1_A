@@ -327,6 +327,7 @@ always @(posedge clk_sys) begin
 end
 
 
+localparam P47      = 0;
 localparam RODLAND  = 3;
 localparam RODLANDJ = 4;
 localparam ASTYANAX = 6;
@@ -334,6 +335,8 @@ localparam SOLDAM   = 7;
 localparam SOLDAMJ  = 8;
 
 reg [23:0] prom [0:15];
+
+reg [7:0]  irq1_scanline;
 
 always @(posedge clk_sys) begin
     if (ioctl_wr && ioctl_index==1) begin
@@ -345,6 +348,10 @@ always @(posedge clk_sys) begin
         if ( ioctl_addr[1:0] > 0 ) begin
             prom[ioctl_addr[5:2]][ { ~ioctl_addr[1:0], 3'b111 } -: 8] <= ioctl_dout;
         end
+    end
+
+    if (ioctl_wr && ioctl_index==3) begin
+        irq1_scanline <= ioctl_dout;
     end
 end
 
@@ -822,6 +829,7 @@ begin
 end
 endfunction
 
+//localparam P47      = 0;  p47
 //localparam RODLAND  = 3;  rodland
 //localparam RODLANDJ = 4;  astyanax
 //localparam ASTYANAX = 6;  astyanax
@@ -1139,7 +1147,7 @@ chip_select chip_select
 (
     .clk(clk_sys),
     .pcb,
-// main cpu
+    // main cpu
     .m68kp_a,
     .m68kp_as_n,
     .m68kp_rw,
@@ -1223,22 +1231,22 @@ always @ (posedge clk_sys) begin
         mcu_ram[2] <= 0;
         mcu_ram[3] <= 0;
         mcu_ram[4] <= 0;
-//        dtack_count <= 0;
+
     end else begin
         // vblank handling
         hbl_sr <= { hbl_sr[0], hbl };
         if ( hbl_sr == 2'b01 ) begin // rising edge
             //  68k interrupts
             //  mcu may alter irq timing
-            if (          vc == 8'hf0 ) begin  // vblank start
-                // irq 2
-                m68kp_ipl1_n <= 0;
-            end else if ( vc == 8'h10 ) begin  // vblank end
+            if ( vc == irq1_scanline ) begin  // vblank end
                 // irq 1
                 m68kp_ipl0_n <= 0;
             end else if ( vc == 8'h80 ) begin  // mid playfield
                 // irq 3
                 m68kp_ipl0_n <= 0;
+                m68kp_ipl1_n <= 0;
+            end else if ( vc == 8'hf0 ) begin  // vblank start
+                // irq 2
                 m68kp_ipl1_n <= 0;
             end
         end
@@ -1269,15 +1277,22 @@ always @ (posedge clk_sys) begin
                              m68kp_spr_ctrl_cs ? sprite_control :
                              16'h0000;
             end else begin
-                    // mcu handling
-                    if ( pcb == ASTYANAX && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
-                        if (mcu_ram[0] == 16'h00ff && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h0000 ) begin
-                            mcu_en <= 1 ;
-                        end else begin
-                            mcu_en <= 0 ;
-                        end
-                        mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
+                // mcu handling
+                if ( pcb == ASTYANAX && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
+                    if (mcu_ram[0] == 16'h00ff && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h0000 ) begin
+                        mcu_en <= 1 ;
+                    end else begin
+                        mcu_en <= 0 ;
                     end
+                    mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
+                end else if ( pcb == STDRAGON && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
+                    if (mcu_ram[0] == 16'h0000 && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h00ff ) begin
+                        mcu_en <= 1 ;
+                    end else begin
+                        mcu_en <= 0 ;
+                    end
+                    mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
+                end
                 // writes
                 if ( m68kp_latch0_cs == 1 ) begin
                     // sound latch
@@ -1321,16 +1336,16 @@ always @ (posedge clk_sys) begin
         end        // clk_cpu_p
                    // m68ks_rom_valid forced hi. no need for rom dtack since bram is used
                    // dtack is for audio
-        m68ks_dtack_n <= ( m68ks_ym2151_cs & ym2151_dout[7] ) | (oki0_rom_cs & ~oki0_rom_done) | (oki1_rom_cs & ~oki1_rom_done);
+        m68ks_dtack_n <= ( m68ks_ym2151_cs & ym2151_dout[7] );
         if ( m68ks_ym2151_cs == 0 || m68ks_rw == 1 ) begin
             ym2151_w <= 0;
         end
+        oki0_w <= 0;
+        oki1_w <= 0;
         if ( clk_cpu_s == 1 ) begin
-            oki0_w <= 0;
-            oki1_w <= 0;
-            if ( m68ks_as_n == 0 && m68ks_fc == 3'b111 ) begin
-                m68ks_ipl2_n <= 1;
-            end
+//            if ( m68ks_as_n == 0 && m68ks_fc == 3'b111 ) begin
+//                m68ks_ipl2_n <= 1;
+//            end
             if ( m68ks_rw == 1 ) begin
                 // reads
                 m68ks_din <= m68ks_rom_cs    ? m68ks_rom_dout :
@@ -1364,11 +1379,7 @@ always @ (posedge clk_sys) begin
     end            // reset
 end                // always
 
-// if (m_mcu_hs && ((m_mcu_hs_ram[4] ) & 0xfff) == (offset>>5 & 0xfff))
-// {
-// return 0x889e;
-// }
-
+// mcu hack
 always @ * begin
     mcu_rom = m68kp_rom_dout ;
     if ( pcb == ASTYANAX ) begin
@@ -1542,14 +1553,14 @@ always @( posedge clk_sys, posedge reset ) begin
         fm_mult<=0;
     end else begin
     case( pcm0_level )
-        0: pcm0_mult <= 8'h04;    // 25%
+        0: pcm0_mult <= 8'h07;    // 44%
         1: pcm0_mult <= 8'h08;    // 50%
         2: pcm0_mult <= 8'h0c;    // 75%
         3: pcm0_mult <= 8'h0;     // 0%
     endcase
 
     case( pcm1_level )
-        0: pcm1_mult <= 8'h04;    // 25%
+        0: pcm1_mult <= 8'h06;    // 37.5%
         1: pcm1_mult <= 8'h08;    // 50%
         2: pcm1_mult <= 8'h0c;    // 75%
         3: pcm1_mult <= 8'h0;     // 0%
@@ -1763,7 +1774,7 @@ always @ (posedge clk_sys) begin
             if ( scroll_layer > 2 ) begin
                 // sprite layer?
                 scroll_state <= 18;
-            end else if ( layer_enable[scroll_layer[1:0]] == 0 ) begin
+            end else if ( layer_enable[scroll_layer[1:0]] == 0 && layer_idx < 4 ) begin
                 // disabled?
                 scroll_state <= 18;
             end else begin
@@ -2113,7 +2124,7 @@ reg  [3:0] sprite_priority_lo;
 
 always @ (posedge clk_sys) begin
 
-    if ( hc < 242 ) begin
+    if ( vc < 242 ) begin
         if ( clk6_count == 2 ) begin
             line_buf_addr_r <= { vc[0], 1'b0, hc[7:0] };
         end else if ( clk6_count == 3 ) begin
