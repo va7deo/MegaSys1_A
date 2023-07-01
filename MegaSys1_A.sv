@@ -333,6 +333,7 @@ localparam RODLANDJ = 4;
 localparam ASTYANAX = 6;
 localparam SOLDAM   = 7;
 localparam SOLDAMJ  = 8;
+localparam STDRAGON = 99;
 
 reg [23:0] prom [0:15];
 
