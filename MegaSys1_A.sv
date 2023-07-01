@@ -380,9 +380,9 @@ reg [15:0] system;
 
 always @ (posedge clk_sys ) begin
         p1   <=  ~{ start1, p1_buttons[3:0], p1_up, p1_down, p1_left, p1_right };
-        p2   <=  ~{ start2, p2_buttons[3:0], p2_up, p2_down, p2_left, p2_right };
+        p2   <=  ~{ sw[2], start2, p2_buttons[3:0], p2_up, p2_down, p2_left, p2_right };
         dsw <= { sw[0], sw[1] };
-        system <= ~{ 8'h00, coin_b, coin_a, service, 3'b0, start2, start1 };
+        system <= ~{ 8'h00, coin_b, coin_a, service, sw[3][2:0], start2, start1 };
 end
 
 reg        p1_swap;
@@ -1340,12 +1340,14 @@ always @ (posedge clk_sys) begin
         if ( m68ks_ym2151_cs == 0 || m68ks_rw == 1 ) begin
             ym2151_w <= 0;
         end
-        oki0_w <= 0;
-        oki1_w <= 0;
         if ( clk_cpu_s == 1 ) begin
 //            if ( m68ks_as_n == 0 && m68ks_fc == 3'b111 ) begin
 //                m68ks_ipl2_n <= 1;
 //            end
+
+            oki0_w <= 0;
+            oki1_w <= 0;
+
             if ( m68ks_rw == 1 ) begin
                 // reads
                 m68ks_din <= m68ks_rom_cs    ? m68ks_rom_dout :
@@ -1567,9 +1569,9 @@ always @( posedge clk_sys, posedge reset ) begin
     endcase
 
     case( fm_level )
-        0: fm_mult <= 8'h04;    // 25%
+        0: fm_mult <= 8'h0c;    // 75%
         1: fm_mult <= 8'h08;    // 50%
-        2: fm_mult <= 8'h0c;    // 75%
+        2: fm_mult <= 8'h04;    // 25%
         3: fm_mult <= 8'h0;     // 0%
     endcase
     end
@@ -1631,8 +1633,8 @@ jtframe_mixer #(.W0(16), .W1(16), .WOUT(16)) u_mix_mono(
     .ch2    (              ),
     .ch3    (              ),
     // gain for each channel in 4.4 fixed point format
-    .gain0  ( 8'h0c        ),    // 75%
-    .gain1  ( 8'h0c        ),    // 75%
+    .gain0  ( 8'h0b        ),    // 68.7%
+    .gain1  ( 8'h0b        ),    // 68.7%
     .gain2  ( 8'd0         ),
     .gain3  ( 8'd0         ),
     .mixed  ( mono         ),
