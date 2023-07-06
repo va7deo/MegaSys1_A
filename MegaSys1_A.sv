@@ -47,10 +47,11 @@ module emu
     output  [7:0] VGA_B,
     output        VGA_HS,
     output        VGA_VS,
-    output        VGA_DE,     // = ~(VBlank | HBlank)
+    output        VGA_DE,      // = ~(VBlank | HBlank)
     output        VGA_F1,
     output [2:0]  VGA_SL,
-    output        VGA_SCALER, // Force VGA scaler
+    output        VGA_SCALER,  // Force VGA scaler
+    output        VGA_DISABLE, // analog out is off
 
     input  [11:0] HDMI_WIDTH,
     input  [11:0] HDMI_HEIGHT,
