@@ -51,7 +51,7 @@ module emu
     output        VGA_F1,
     output [2:0]  VGA_SL,
     output        VGA_SCALER,  // Force VGA scaler
-    output        VGA_DISABLE, // analog out is off
+    output        VGA_DISABLE, // Analog out is off
 
     input  [11:0] HDMI_WIDTH,
     input  [11:0] HDMI_HEIGHT,
@@ -210,7 +210,7 @@ assign BUTTONS = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXXXXXXXXXX     X X XXXXXXXX             XXXXXX       XXXXXXXX
+// X  XXXXXXXXXXX     X X XXXXXXXXX XXXXXXXXXXXXXXXXXX      XXXXXXXX
 
 wire [1:0] aspect_ratio = status[9:8];
 wire       orientation  = ~status[3];
@@ -263,14 +263,30 @@ localparam CONF_STR = {
     //"P2-;",
     "P2oBC,ADPCM-0 Volume,Default,50%,75%,Off;",
     "P2oDE,ADPCM-1 Volume,Default,50%,75%,Off;",
-    "P2oFG,OPM Volume,Default,50%,75%,Off;",
+    "P2oFG,OPM Volume,Default,50%,25%,Off;",
     "P2-;",
     "-;",
     "P3,Core Options;",
     "P3-;",
-    "P3o6,Swap P1/P2 Joystick,Off,On;",
+    "P3oH,Swap P1/P2 Joystick,Off,On;",
     "P3-;",
     "P3OF,68k Freq.,6Mhz,7.2MHz;",
+    "P3-;",
+    "P3-;",
+    "P3-;",
+    "P3o0,P1 Reserve 1,Off,On;",
+    "P3o1,P1 Reserve 2,On,Off;",
+    "P3o2,P1 Reserve 3,Off,On;",
+    "P3o3,P1 Reserve 4,Off,On;",
+    "P3-;",
+    "P3o4,P2 Reserve 1,On,Off;",
+    "P3o5,P2 Reserve 2,On,Off;",
+    "P3o6,P2 Reserve 3,Off,On;",
+    "P3o7,P2 Reserve 4,On,Off;",
+    "P3-;",
+    "P3o8,Unknown,Off,On;",
+    "P3o9,Unknown,Off,On;",
+    "P3oA,Unknown,Off,On;",
     "P3-;",
     "DIP;",
     "-;",
@@ -329,6 +345,7 @@ end
 
 
 localparam P47      = 0;
+localparam PHANTASM = 2;
 localparam RODLAND  = 3;
 localparam RODLANDJ = 4;
 localparam ASTYANAX = 6;
@@ -369,7 +386,7 @@ wire [26:0] ioctl_addr;
 wire  [7:0] ioctl_dout;
 wire  [7:0] ioctl_din;
 
-reg   [3:0] pcb;
+reg   [4:0] pcb;
 reg   [7:0] cfg;
 
 wire [21:0] gamma_bus;
@@ -381,10 +398,10 @@ reg [15:0] dsw;
 reg [15:0] system;
 
 always @ (posedge clk_sys ) begin
-        p1   <=  ~{ start1, p1_buttons[3:0], p1_up, p1_down, p1_left, p1_right };
-        p2   <=  ~{ sw[2], start2, p2_buttons[3:0], p2_up, p2_down, p2_left, p2_right };
-        dsw <= { sw[0], sw[1] };
-        system <= ~{ 8'h00, coin_b, coin_a, service, sw[3][2:0], start2, start1 };
+    p1   <=  ~{ 8'h00, p1_buttons[3:0], p1_up, p1_down, p1_left, p1_right };
+    p2   <=  ~{ reserve_2p_4, reserve_2p_3, reserve_2p_2, reserve_2p_1, reserve_1p_4, reserve_1p_3, reserve_1p_2, reserve_1p_1, p2_buttons[3:0], p2_up, p2_down, p2_left, p2_right };
+    dsw <= { sw[0], sw[1] };
+    system <= ~{ 8'h00, coin_b, coin_a, service, unknown_2, unknown_1, unknown_0, start2, start1 };
 end
 
 reg        p1_swap;
@@ -408,21 +425,43 @@ reg coin_b;
 reg b_pause;
 reg service;
 
-always @ * begin
-    p1_swap <= status[38];
+// Purpose unknown, set like PCB
+reg        reserve_1p_1;
+reg        reserve_1p_2;
+reg        reserve_1p_3;
+reg        reserve_1p_4;
 
-        if ( status[38] == 0 ) begin
+reg        reserve_2p_1;
+reg        reserve_2p_2;
+reg        reserve_2p_3;
+reg        reserve_2p_4;
+
+// Purpose unknown, unknown_1 registers as coinup on PCB
+reg        unknown_0;
+reg        unknown_1;
+reg        unknown_2;
+
+always @ * begin
+    p1_swap <= status[49];
+
+        if ( status[49] == 0 ) begin
         p1_right   <= joy0[0]   | key_p1_right;
         p1_left    <= joy0[1]   | key_p1_left;
         p1_down    <= joy0[2]   | key_p1_down;
         p1_up      <= joy0[3]   | key_p1_up;
         p1_buttons <= joy0[7:4] | { key_p1_d, key_p1_c, key_p1_b, key_p1_a };
 
+        start1     <= joy0[8]   | joy1[8]  | key_start_1p;
+        coin_a     <= joy0[10]  | joy1[10] | key_coin_a;
+
         p2_right   <= joy1[0]   | key_p2_right;
         p2_left    <= joy1[1]   | key_p2_left;
         p2_down    <= joy1[2]   | key_p2_down;
         p2_up      <= joy1[3]   | key_p2_up;
         p2_buttons <= joy1[7:4] | { key_p2_d, key_p2_c, key_p2_b, key_p2_a };
+
+        start2     <= joy0[9]   | joy1[9]  | key_start_2p;
+        coin_b     <= joy0[11]  | joy1[11] | key_coin_b;
     end else begin
         p2_right   <= joy0[0]   | key_p1_right;
         p2_left    <= joy0[1]   | key_p1_left;
@@ -430,24 +469,38 @@ always @ * begin
         p2_up      <= joy0[3]   | key_p1_up;
         p2_buttons <= joy0[7:4] | { key_p1_d, key_p1_c, key_p1_b, key_p1_a };
 
+        start2     <= joy0[8]   | joy1[8]  | key_start_1p;
+        coin_b     <= joy0[10]  | joy1[10] | key_coin_a;
+
         p1_right   <= joy1[0]   | key_p2_right;
         p1_left    <= joy1[1]   | key_p2_left;
         p1_down    <= joy1[2]   | key_p2_down;
         p1_up      <= joy1[3]   | key_p2_up;
         p1_buttons <= joy1[7:4] | { key_p2_d, key_p2_c, key_p2_b, key_p2_a };
+
+        start1     <= joy1[9]   | joy0[9]  | key_start_2p;
+        coin_a     <= joy0[11]  | joy1[11] | key_coin_b;
     end
 end
 
 always @ * begin
-        start1    <= joy0[8]  | joy1[8]  | key_start_1p;
-        start2    <= joy0[9]  | joy1[9]  | key_start_2p;
+    service   <= key_service;
 
-        coin_a    <= joy0[10] | joy1[10] | key_coin_a;
-        coin_b    <= joy0[11] | joy1[11] | key_coin_b;
+    b_pause   <= joy0[12] | joy1[12] | key_pause;
 
-        service   <= key_service;
+    reserve_1p_1 <= status[32];
+    reserve_1p_2 <= ~status[33];
+    reserve_1p_3 <= status[34];
+    reserve_1p_4 <= status[35];
 
-        b_pause   <= joy0[12] | joy1[12] | key_pause;
+    reserve_2p_1 <= ~status[36];
+    reserve_2p_2 <= ~status[37];
+    reserve_2p_3 <= status[38];
+    reserve_2p_4 <= ~status[39];
+
+    unknown_0 <= status[40];
+    unknown_1 <= status[41];
+    unknown_2 <= status[42];
 end
 
 // Keyboard handler
@@ -629,7 +682,6 @@ end
 video_timing video_timing (
     .clk(clk_sys),
     .clk_pix(clk_6M),
-    .pcb(pcb),
     .hc(hc),
     .vc(vc),
     .refresh_mod(refresh_mod),
@@ -648,7 +700,7 @@ wire    pause_cpu;
 wire    hs_pause;
 
 // 8 bits per colour, 72MHz sys clk
-pause #(8,8,8,72) pause 
+pause #(8,8,8,72) pause
 (
     .clk_sys(clk_sys),
     .reset(reset),
@@ -831,7 +883,8 @@ begin
 end
 endfunction
 
-//localparam P47      = 0;  p47
+//localparam P47      = 0;  no encryption
+//localparam PHANTASM = 2;  phantasm
 //localparam RODLAND  = 3;  rodland
 //localparam RODLANDJ = 4;  astyanax
 //localparam ASTYANAX = 6;  astyanax
@@ -858,7 +911,7 @@ begin
         end else begin
             cpu_decode = d;
         end
-    end else if ( pcb == 4 || pcb == 6 || pcb == 8) begin
+    end else if ( pcb == 4 || pcb == 6 || pcb == 8 ) begin
         // astyanax
         if          ( i < 20'h04000 ) begin
             cpu_decode = ( i[8] & i[5] & i[2] ) ? swap_11( d ) : swap_10( d );
@@ -1418,27 +1471,27 @@ assign      AUDIO_S = 1;
 
 jt51 ym2151
 (
-    .rst( reset | soft_reset ),      // reset
-    .clk( clk_sys ),                 // main clock
-    .cen_p1( clk_1_75M ),            // 1.75mhz, half clock
-    .cs_n( 0 ),                      // chip select
-    .wr_n( ~ym2151_w ),              // write
-    .a0(   ym2151_addr ),
-    .din(  ym2151_din ),             // data in
-    .dout( ym2151_dout ),            // data out ym2151_dout
-    .ct1( ),
-    .ct2( ),
-    .irq_n( ym2151_irq_n ),
+    .rst      ( reset | soft_reset ), // reset
+    .clk      ( clk_sys            ), // main clock
+    .cen_p1   ( clk_1_75M          ), // 1.75mhz, half clock
+    .cs_n     ( 0                  ), // chip select
+    .wr_n     ( ~ym2151_w          ), // write
+    .a0       ( ym2151_addr        ),
+    .din      ( ym2151_din         ), // data in
+    .dout     ( ym2151_dout        ), // data out ym2151_dout
+    .ct1      (                    ),
+    .ct2      (                    ),
+    .irq_n    ( ym2151_irq_n       ),
     // Low resolution output (same as real chip)
-    .sample( ),                      // marks new output sample
-    .left( ym_left ),
-    .right( ym_right ),
+    .sample   (                    ), // marks new output sample
+    .left     ( ym_left            ),
+    .right    ( ym_right           ),
     // Full resolution output
-    .xleft( ),
-    .xright( ),
+    .xleft    (                    ),
+    .xright   (                    ),
     // unsigned outputs for sigma delta converters, full resolution
-    .dacleft( ),
-    .dacright( )
+    .dacleft  (                    ),
+    .dacright (                    )
 );
 
 reg   [7:0] oki0_din;

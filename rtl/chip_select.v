@@ -3,7 +3,7 @@
 module chip_select
 (
     input        clk,
-    input  [3:0] pcb,
+    input  [4:0] pcb,
 
     input [23:0] m68kp_a,
     input        m68kp_as_n,
@@ -67,8 +67,11 @@ begin
 end
 endfunction
 
+localparam P47      = 0;
+localparam PHANTASM = 2;
 localparam RODLAND  = 3;
 localparam RODLANDJ = 4;
+localparam ASTYANAX = 6;
 localparam SOLDAM   = 7;
 localparam SOLDAMJ  = 8;
 
@@ -90,6 +93,7 @@ always @ (*) begin
 
             m68kp_pal_cs    <= m68kp_cs( 24'h088000, 24'h0887ff );
 
+            // soldam sprite ram 0x8c000, 0x8cfff
             m68kp_spr_cs      <= m68kp_cs( 24'h08e000, 24'h08ffff ) | m68kp_cs( 24'h08c000, 24'h08cfff ); // object ram
             m68kp_spr_ctrl_cs <= m68kp_cs( 24'h084100, 24'h084101 );
             m68kp_scr_ctrl_cs <= m68kp_cs( 24'h084300, 24'h084301 );

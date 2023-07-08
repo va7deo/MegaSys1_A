@@ -5,7 +5,6 @@ module video_timing
     input       clk_pix,
     input       reset,
 
-    input  [2:0] pcb,
     input        refresh_mod,
 
     input  signed [3:0] hs_offset,
