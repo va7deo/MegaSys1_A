@@ -344,14 +344,16 @@ always @(posedge clk_sys) begin
 end
 
 
-localparam P47      = 0;
-localparam PHANTASM = 2;
-localparam RODLAND  = 3;
-localparam RODLANDJ = 4;
-localparam ASTYANAX = 6;
-localparam SOLDAM   = 7;
-localparam SOLDAMJ  = 8;
-localparam STDRAGON = 99;
+localparam P47       = 0;
+localparam PHANTASM  = 2;
+localparam RODLAND   = 3;
+localparam RODLANDJ  = 4;
+localparam ASTYANAX  = 6;
+localparam SOLDAM    = 7;
+localparam SOLDAMJ   = 8;
+localparam STDRAGON  = 11;
+localparam STDRAGONA = 12;
+localparam BLANK     = 99;
 
 reg [23:0] prom [0:15];
 
@@ -883,20 +885,22 @@ begin
 end
 endfunction
 
-//localparam P47      = 0;  no encryption
-//localparam PHANTASM = 2;  phantasm
-//localparam RODLAND  = 3;  rodland
-//localparam RODLANDJ = 4;  astyanax
-//localparam ASTYANAX = 6;  astyanax
-//localparam SOLDAM   = 7;  phantasm
-//localparam SOLDAMJ  = 8;  astyanax
+//localparam P47       = 0;  no encryption
+//localparam PHANTASM  = 2;  phantasm
+//localparam RODLAND   = 3;  rodland
+//localparam RODLANDJ  = 4;  astyanax
+//localparam ASTYANAX  = 6;  astyanax
+//localparam SOLDAM    = 7;  phantasm
+//localparam SOLDAMJ   = 8;  astyanax
+//localparam STDRAGON  = 11; phantasm
+//localparam STDRAGONA = 12; phantasm
 
 function [15:0] cpu_decode(input [23:0] i, input [15:0] d);
 begin
     if ( pcb == 0 || pcb == 1 ) begin
         // p47 & kickoff are not encrypted
         cpu_decode = d;
-    end else if ( pcb == 2 || pcb == 5 || pcb == 7 || pcb == 9 || pcb == 10 ) begin
+    end else if ( pcb == 2 || pcb == 5 || pcb == 7 || pcb == 9 || pcb == 10 || pcb == 11 || pcb == 12 ) begin
         // phantasm
         if          ( i < 20'h04000 ) begin
             cpu_decode = ( i[8] & i[5] & i[2] ) ? swap_01( d ) : swap_00( d );
@@ -947,7 +951,22 @@ endfunction
 
 function [19:0] spr_decode_1(input [19:0] a);
 begin
+    //int a = bitswap<20>(i, 19, 18, 17, 16, 15, 14,  3, 12, 11, 13, 9, 10, 7, 6, 5, 4,  8, 2, 1, 0);
     spr_decode_1 = { a[19:14], a[3],  a[12:11], a[13], a[9], a[10], a[7:4],  a[8], a[2:0] };
+end
+endfunction
+
+function [19:0] spr_decode_2(input [19:0] a);
+begin
+//int a = bitswap<20>(i, 19, 18, 17, 16, 15, 14, 10, 12, 11,  8, 9,  3, 7, 6, 5, 4, 13, 2, 1, 0);
+    spr_decode_2 = { a[19:14], a[10],  a[12:11], a[8], a[9], a[3], a[7:4],  a[13], a[2:0] };
+end
+endfunction
+
+function [19:0] spr_decode_3(input [19:0] a);
+begin
+//int a = bitswap<20>(i, 19, 18, 17, 16, 15, 14, 8, 12, 11, 3, 9, 13, 7, 6, 5, 4, 10, 2, 1, 0);
+    spr_decode_3 = { a[19:14], a[8],  a[12:11], a[3], a[9], a[13], a[7:4],  a[10], a[2:0] };
 end
 endfunction
 
@@ -955,7 +974,10 @@ endfunction
 wire [26:0] sprite_ioctl_addr = { ioctl_addr[26:7], ioctl_addr[5:2], ioctl_addr[6], ioctl_addr[1:0] }; 
 
 // address is decoded before it is rearranged for efficient 64 bit wide access
-wire [19:0] decode_ioctl_addr = spr_decode_1(ioctl_addr[19:0]);
+wire [19:0] decode_ioctl_addr = ( pcb == RODLAND ||  pcb == RODLANDJ ) ? spr_decode_1(ioctl_addr[19:0]) : 
+                                ( pcb == STDRAGONA ) ? spr_decode_2(ioctl_addr[19:0]) :
+                                spr_decode_3(ioctl_addr[19:0]);
+
 wire [19:0] sprite_decode_ioctl_addr = { decode_ioctl_addr[19:7], decode_ioctl_addr[5:2], decode_ioctl_addr[6], decode_ioctl_addr[1:0] };
 
 always @ (posedge clk_sys) begin
@@ -975,18 +997,24 @@ always @ (posedge clk_sys) begin
         if ( pcb == RODLAND ||  pcb == RODLANDJ ) begin
             // TODO: ioctl address needs ofset corrected before the address decode is done
             download_addr <=  26'h280000 | sprite_decode_ioctl_addr;  // rodland
+            // 6, 4, 5, 3, 7, 2, 1, 0
             download_data <= { ioctl_dout[6], ioctl_dout[4], ioctl_dout[5], ioctl_dout[3], ioctl_dout[7], ioctl_dout[2:0] };
+        end else if ( pcb == STDRAGONA ) begin
+            // TODO: ioctl address needs ofset corrected before the address decode is done
+            download_addr <=  26'h280000 | sprite_decode_ioctl_addr;  // stdragona
+            // 3,7,5,6,4,2,1,0
+            download_data <= { ioctl_dout[3], ioctl_dout[7], ioctl_dout[5], ioctl_dout[6], ioctl_dout[4], ioctl_dout[2:0] };
         end else begin
-            download_addr <= sprite_ioctl_addr; 
+            download_addr <= sprite_ioctl_addr;
             download_data <= ioctl_dout;
         end
     end else if ( ioctl_addr >= 26'h300000 && ioctl_addr < 26'h380000 ) begin
         // scroll 1
-        download_addr <= sprite_ioctl_addr; 
+        download_addr <= sprite_ioctl_addr;
         download_data <= ioctl_dout;
     end else if ( ioctl_addr >= 26'h380000 && ioctl_addr < 26'h400000 ) begin
         // scroll 2
-        download_addr <= sprite_ioctl_addr; 
+        download_addr <= sprite_ioctl_addr;
         download_data <= ioctl_dout;
     end else if ( ioctl_addr >= 26'h400000 && ioctl_addr < 26'h500000 ) begin
         // sprites
@@ -999,10 +1027,14 @@ always @ (posedge clk_sys) begin
         // 08,09,0A,0B,48,49,4A,4B
 
         if ( pcb == RODLAND ||  pcb == RODLANDJ ) begin
-            download_addr <=  26'h400000 | sprite_decode_ioctl_addr; 
+            download_addr <=  26'h400000 | sprite_decode_ioctl_addr;
             download_data <= { ioctl_dout[6], ioctl_dout[4], ioctl_dout[5], ioctl_dout[3], ioctl_dout[7], ioctl_dout[2:0] };
+        end else if ( pcb == STDRAGONA ) begin
+            // TODO: ioctl address needs ofset corrected before the address decode is done
+            download_addr <=  26'h400000 | sprite_decode_ioctl_addr;  // stdragona
+            download_data <= { ioctl_dout[3], ioctl_dout[7], ioctl_dout[5], ioctl_dout[6], ioctl_dout[4], ioctl_dout[2:0] };
         end else begin
-            download_addr <= sprite_ioctl_addr; 
+            download_addr <= sprite_ioctl_addr;
             download_data <= ioctl_dout;
         end
     end else begin
@@ -1340,7 +1372,7 @@ always @ (posedge clk_sys) begin
                         mcu_en <= 0 ;
                     end
                     mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
-                end else if ( pcb == STDRAGON && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
+                end else if ( pcb == STDRAGON || pcb == STDRAGONA && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
                     if (mcu_ram[0] == 16'h0000 && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h00ff ) begin
                         mcu_en <= 1 ;
                     end else begin
@@ -1399,17 +1431,15 @@ always @ (posedge clk_sys) begin
 //            if ( m68ks_as_n == 0 && m68ks_fc == 3'b111 ) begin
 //                m68ks_ipl2_n <= 1;
 //            end
-
             oki0_w <= 0;
             oki1_w <= 0;
-
             if ( m68ks_rw == 1 ) begin
                 // reads
                 m68ks_din <= m68ks_rom_cs    ? m68ks_rom_dout :
                              m68ks_ram_cs    ? m68ks_ram_dout :
                              m68ks_latch0_cs ? m68kp_latch0   :
-                             m68ks_oki0_cs   ? { 8'h00, 8'h00 } : // oki0_dout
-                             m68ks_oki1_cs   ? { 8'h00, 8'h00 } : // oki1_dout
+                             m68ks_oki0_cs   ? { 8'h00, ( ( pcb == BLANK ) ?  oki0_dout : 8'h00 ) } : // oki0_dout
+                             m68ks_oki1_cs   ? { 8'h00, ( ( pcb == BLANK ) ?  oki1_dout : 8'h00 ) } : // oki1_dout
                              m68ks_ym2151_cs ? { 8'h00, ym2151_dout } :
                              16'h0000;
             end else begin
@@ -1438,15 +1468,19 @@ end                // always
 
 // mcu hack
 always @ * begin
-    mcu_rom = m68kp_rom_dout ;
+    mcu_rom = m68kp_rom_dout;
     if ( pcb == ASTYANAX ) begin
         if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h03FFC0 && m68kp_a[23:0] < 24'h040000 ) begin
             mcu_rom = 16'h889e;
-        end 
+        end
     end else if ( pcb == STDRAGON ) begin
         if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h00CF80 && m68kp_a[23:0] < 24'h00CF82 ) begin
             mcu_rom = 16'h835d;
-        end 
+        end
+    end else if ( pcb == STDRAGONA ) begin
+        if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h00CFC0 && m68kp_a[23:0] < 24'h00D000 ) begin
+            mcu_rom = 16'h835d;
+        end
     end
 end
 

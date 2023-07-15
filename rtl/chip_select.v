@@ -67,13 +67,15 @@ begin
 end
 endfunction
 
-localparam P47      = 0;
-localparam PHANTASM = 2;
-localparam RODLAND  = 3;
-localparam RODLANDJ = 4;
-localparam ASTYANAX = 6;
-localparam SOLDAM   = 7;
-localparam SOLDAMJ  = 8;
+localparam P47       = 0;
+localparam PHANTASM  = 2;
+localparam RODLAND   = 3;
+localparam RODLANDJ  = 4;
+localparam ASTYANAX  = 6;
+localparam SOLDAM    = 7;
+localparam SOLDAMJ   = 8;
+localparam STDRAGON  = 11;
+localparam STDRAGONA = 12;
 
 always @ (*) begin
     // Memory mapping based on PCB type
