@@ -76,6 +76,7 @@ localparam SOLDAM    = 7;
 localparam SOLDAMJ   = 8;
 localparam STDRAGON  = 11;
 localparam STDRAGONA = 12;
+localparam IGANINJU  = 15;
 
 always @ (*) begin
     // Memory mapping based on PCB type

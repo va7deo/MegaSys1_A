@@ -353,6 +353,7 @@ localparam SOLDAM    = 7;
 localparam SOLDAMJ   = 8;
 localparam STDRAGON  = 11;
 localparam STDRAGONA = 12;
+localparam IGANINJU  = 15;
 localparam BLANK     = 99;
 
 reg [23:0] prom [0:15];
@@ -894,13 +895,14 @@ endfunction
 //localparam SOLDAMJ   = 8;  astyanax
 //localparam STDRAGON  = 11; phantasm
 //localparam STDRAGONA = 12; phantasm
+//localparam IGANINJU  = 15; phantasm
 
 function [15:0] cpu_decode(input [23:0] i, input [15:0] d);
 begin
     if ( pcb == 0 || pcb == 1 ) begin
         // p47 & kickoff are not encrypted
         cpu_decode = d;
-    end else if ( pcb == 2 || pcb == 5 || pcb == 7 || pcb == 9 || pcb == 10 || pcb == 11 || pcb == 12 ) begin
+    end else if ( pcb == 2 || pcb == 5 || pcb == 7 || pcb == 9 || pcb == 10 || pcb == 11 || pcb == 12 || pcb == 15 ) begin
         // phantasm
         if          ( i < 20'h04000 ) begin
             cpu_decode = ( i[8] & i[5] & i[2] ) ? swap_01( d ) : swap_00( d );
@@ -1280,10 +1282,13 @@ chip_select chip_select
 );
 
 reg   [1:0] hbl_sr;
+reg         write_done_p;
+reg         write_done_s;
 
 reg  [15:0] sprite_control;
 reg  [15:0] screen_control;
 reg   [3:0] layer_enable;
+reg         irq2_en;
 
 
 /// 68k cpu
@@ -1318,6 +1323,11 @@ always @ (posedge clk_sys) begin
         mcu_ram[2] <= 0;
         mcu_ram[3] <= 0;
         mcu_ram[4] <= 0;
+        
+        irq2_en <= 0 ;
+        
+        write_done_p <= 0;
+        write_done_s <= 0;
 
     end else begin
         // vblank handling
@@ -1325,16 +1335,25 @@ always @ (posedge clk_sys) begin
         if ( hbl_sr == 2'b01 ) begin // rising edge
             //  68k interrupts
             //  mcu may alter irq timing
-            if ( vc == irq1_scanline ) begin  // vblank end
-                // irq 1
-                m68kp_ipl0_n <= 0;
-            end else if ( vc == 8'h80 ) begin  // mid playfield
-                // irq 3
-                m68kp_ipl0_n <= 0;
-                m68kp_ipl1_n <= 0;
-            end else if ( vc == 8'hf0 ) begin  // vblank start
-                // irq 2
-                m68kp_ipl1_n <= 0;
+            if ( pcb == IGANINJU ) begin
+                if ( irq2_en == 1 ) begin
+                    if ( vc == 8'hf0 ) begin  // vblank start
+                        // irq 2
+                        m68kp_ipl1_n <= 0;
+                    end                
+                end
+            end else begin
+                if ( vc == irq1_scanline ) begin  // vblank end
+                    // irq 1
+                    m68kp_ipl0_n <= 0;
+                end else if ( vc == 8'h80 ) begin  // mid playfield
+                    // irq 3
+                    m68kp_ipl0_n <= 0;
+                    m68kp_ipl1_n <= 0;
+                end else if ( vc == 8'hf0 ) begin  // vblank start
+                    // irq 2
+                    m68kp_ipl1_n <= 0;
+                end
             end
         end
         if ( clk_cpu_p == 1 ) begin
@@ -1344,6 +1363,11 @@ always @ (posedge clk_sys) begin
                 m68kp_ipl1_n <= 1;
                 m68kp_ipl2_n <= 1;
             end
+            
+            if ( m68kp_as_n == 1 ) begin
+                write_done_p <= 0;
+            end
+            
             if ( m68kp_rw == 1 ) begin
                 // reads
                 m68kp_din <= m68kp_rom_cs      ? mcu_rom : // m68kp_rom_dout :
@@ -1364,75 +1388,111 @@ always @ (posedge clk_sys) begin
                              m68kp_spr_ctrl_cs ? sprite_control :
                              16'h0000;
             end else begin
-                // mcu handling
-                if ( pcb == ASTYANAX && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
-                    if (mcu_ram[0] == 16'h00ff && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h0000 ) begin
-                        mcu_en <= 1 ;
-                    end else begin
-                        mcu_en <= 0 ;
+                
+                if ( write_done_p == 0 ) begin // falling edge
+                    write_done_p <= 1 ;
+
+                    // mcu handling 
+                    if ( pcb == ASTYANAX && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
+                        if (mcu_ram[0] == 16'h00ff && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h0000 ) begin
+                            mcu_en <= 1 ;
+                        end else begin
+                            mcu_en <= 0 ;
+                        end
+                        mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
+                    end else if ( pcb == STDRAGON || pcb == STDRAGONA && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
+                        if (mcu_ram[0] == 16'h0000 && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h00ff ) begin
+                            mcu_en <= 1 ;
+                        end else begin
+                            mcu_en <= 0 ;
+                        end
+                        mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
+                    end else if ( pcb == IGANINJU && m68kp_rom_cs == 1 && m68kp_a[19:12] == 8'h2f ) begin
+                        if (mcu_ram[0] == 16'h0000 && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h00ff ) begin
+                            mcu_en <= 1 ;
+                        end else begin
+                            mcu_en <= 0 ;
+                        end
+                        mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
                     end
-                    mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
-                end else if ( pcb == STDRAGON || pcb == STDRAGONA && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
-                    if (mcu_ram[0] == 16'h0000 && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h00ff ) begin
-                        mcu_en <= 1 ;
-                    end else begin
-                        mcu_en <= 0 ;
+                    
+                    // writes
+                    
+                    if ( pcb == IGANINJU && m68kp_a[23:0] == 24'h0f0000 ) begin
+                        irq2_en <= ( m68kp_dout != 0 ) ;
+
                     end
-                    mcu_ram[m68kp_a[3:1]] <= m68kp_dout;
-                end
-                // writes
-                if ( m68kp_latch0_cs == 1 ) begin
-                    // sound latch
-                    m68kp_latch0 <= m68kp_dout;
-                end
-                if ( m68kp_spr_ctrl_cs == 1 ) begin
-                    sprite_control <= m68kp_dout;
-                end
-                if ( m68kp_scr_ctrl_cs == 1 ) begin
-                    screen_control <= m68kp_dout;
-                end
-                // todo: implement prom decoder.
-                //       decoded layer priority loaded from mra
-                if ( m68kp_layer_cs == 1 ) begin
-                    // low 5 bytes are layer priority order
-                    layer_prom <= prom[m68kp_dout[11:8]][19:0];
-                    layer_enable <= m68kp_dout[3:0];
-                end
-                if ( m68kp_scr0_reg_cs == 1 ) begin
-                    case ( m68kp_a[2:1] )
-                        0: m68kp_scr0_reg_x <= m68kp_dout;
-                        1: m68kp_scr0_reg_y <= m68kp_dout;
-                        2: m68kp_scr0_reg_mode <= m68kp_dout;
-                    endcase
-                end
-                if ( m68kp_scr1_reg_cs == 1 ) begin
-                    case ( m68kp_a[2:1] )
-                        0: m68kp_scr1_reg_x <= m68kp_dout;
-                        1: m68kp_scr1_reg_y <= m68kp_dout;
-                        2: m68kp_scr1_reg_mode <= m68kp_dout;
-                    endcase
-                end
-                if ( m68kp_scr2_reg_cs == 1 ) begin
-                    case ( m68kp_a[2:1] )
-                        0: m68kp_scr2_reg_x <= m68kp_dout;
-                        1: m68kp_scr2_reg_y <= m68kp_dout;
-                        2: m68kp_scr2_reg_mode <= m68kp_dout;
-                    endcase
+
+                    if ( m68kp_latch0_cs == 1 ) begin
+                        // sound latch
+                        m68kp_latch0 <= m68kp_dout;
+                    end
+                    
+                    if ( m68kp_spr_ctrl_cs == 1 ) begin
+                        sprite_control <= m68kp_dout;
+                    end
+                    
+                    if ( m68kp_scr_ctrl_cs == 1 ) begin
+                        screen_control <= m68kp_dout;
+                    end
+                    
+                    // todo: implement prom decoder.
+                    //       decoded layer priority loaded from mra
+                    if ( m68kp_layer_cs == 1 ) begin
+                        // low 5 bytes are layer priority order
+                        layer_prom <= prom[m68kp_dout[11:8]][19:0];
+                        layer_enable <= m68kp_dout[3:0];
+                    end
+                    
+                    if ( m68kp_scr0_reg_cs == 1 ) begin
+                        case ( m68kp_a[2:1] )
+                            0: begin
+                                if ( m68kp_dout == 16'h580 ) begin
+                                    m68kp_scr0_reg_x <= m68kp_scr0_reg_x + 1 ;
+                                end else begin
+                                    m68kp_scr0_reg_x <= m68kp_dout;
+                                end
+                            end
+                            1: m68kp_scr0_reg_y <= m68kp_dout;
+                            2: m68kp_scr0_reg_mode <= m68kp_dout;
+                        endcase
+                    end
+                    
+                    if ( m68kp_scr1_reg_cs == 1 ) begin
+                        case ( m68kp_a[2:1] )
+                            0: m68kp_scr1_reg_x <= m68kp_dout;
+                            1: m68kp_scr1_reg_y <= m68kp_dout;
+                            2: m68kp_scr1_reg_mode <= m68kp_dout;
+                        endcase
+                    end
+                    
+                    if ( m68kp_scr2_reg_cs == 1 ) begin
+                        case ( m68kp_a[2:1] )
+                            0: m68kp_scr2_reg_x <= m68kp_dout;
+                            1: m68kp_scr2_reg_y <= m68kp_dout;
+                            2: m68kp_scr2_reg_mode <= m68kp_dout;
+                        endcase
+                    end
                 end
             end
         end        // clk_cpu_p
                    // m68ks_rom_valid forced hi. no need for rom dtack since bram is used
                    // dtack is for audio
         m68ks_dtack_n <= ( m68ks_ym2151_cs & ym2151_dout[7] );
+        
         if ( m68ks_ym2151_cs == 0 || m68ks_rw == 1 ) begin
             ym2151_w <= 0;
         end
+        
         if ( clk_cpu_s == 1 ) begin
-//            if ( m68ks_as_n == 0 && m68ks_fc == 3'b111 ) begin
-//                m68ks_ipl2_n <= 1;
-//            end
+        
+            if ( m68kp_as_n == 1 ) begin
+                write_done_s <= 0;
+            end
+
             oki0_w <= 0;
             oki1_w <= 0;
+            
             if ( m68ks_rw == 1 ) begin
                 // reads
                 m68ks_din <= m68ks_rom_cs    ? m68ks_rom_dout :
@@ -1443,23 +1503,30 @@ always @ (posedge clk_sys) begin
                              m68ks_ym2151_cs ? { 8'h00, ym2151_dout } :
                              16'h0000;
             end else begin
-                // writes
-                if ( m68ks_latch1_cs == 1 && m68ks_as_n == 0 ) begin
-                    // sound latch
-                    m68ks_latch1 <= m68ks_dout;
-                end
-                if ( m68ks_ym2151_cs == 1 && m68ks_as_n == 0 ) begin
-                    ym2151_din <= m68ks_dout[7:0];
-                    ym2151_addr <= m68ks_a[1];
-                    ym2151_w <= 1;
-                end
-                if ( m68ks_oki0_cs == 1 && m68ks_as_n == 0) begin
-                    oki0_din <= m68ks_dout[7:0];
-                    oki0_w <= 1;
-                end
-                if ( m68ks_oki1_cs == 1 && m68ks_as_n == 0) begin
-                    oki1_din <= m68ks_dout[7:0];
-                    oki1_w <= 1;
+                if ( write_done_s == 0 ) begin // falling edge
+                    write_done_s <= 1 ;
+
+                    // writes
+                    if ( m68ks_latch1_cs == 1 && m68ks_as_n == 0 ) begin
+                        // sound latch
+                        m68ks_latch1 <= m68ks_dout;
+                    end
+                    
+                    if ( m68ks_ym2151_cs == 1 && m68ks_as_n == 0 ) begin
+                        ym2151_din <= m68ks_dout[7:0];
+                        ym2151_addr <= m68ks_a[1];
+                        ym2151_w <= 1;
+                    end
+                    
+                    if ( m68ks_oki0_cs == 1 && m68ks_as_n == 0) begin
+                        oki0_din <= m68ks_dout[7:0];
+                        oki0_w <= 1;
+                    end
+                    
+                    if ( m68ks_oki1_cs == 1 && m68ks_as_n == 0) begin
+                        oki1_din <= m68ks_dout[7:0];
+                        oki1_w <= 1;
+                    end
                 end
             end
         end        // clk_cpu_s
@@ -1479,6 +1546,10 @@ always @ * begin
         end
     end else if ( pcb == STDRAGONA ) begin
         if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h00CFC0 && m68kp_a[23:0] < 24'h00D000 ) begin
+            mcu_rom = 16'h835d;
+        end
+    end else if ( pcb == IGANINJU ) begin
+        if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h2F000 && m68kp_a[23:0] < 24'h2F040 ) begin            
             mcu_rom = 16'h835d;
         end
     end
