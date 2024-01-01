@@ -71,7 +71,7 @@ source sys/sys_analog.tcl
 source files.qip
 
 set_global_assignment -name ENABLE_SIGNALTAP OFF
-set_global_assignment -name LAST_QUARTUS_VERSION "22.1std.2 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "20.1.1 Lite Edition"
 set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
 set_global_assignment -name TOP_LEVEL_ENTITY sys_top
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION ALWAYS

@@ -351,8 +351,11 @@ localparam RODLANDJ  = 4;
 localparam ASTYANAX  = 6;
 localparam SOLDAM    = 7;
 localparam SOLDAMJ   = 8;
+localparam EDFP      = 9;
+localparam INYOURF   = 10;
 localparam STDRAGON  = 11;
 localparam STDRAGONA = 12;
+localparam HACHOO    = 13;
 localparam IGANINJU  = 15;
 localparam BLANK     = 99;
 
@@ -893,8 +896,11 @@ endfunction
 //localparam ASTYANAX  = 6;  astyanax
 //localparam SOLDAM    = 7;  phantasm
 //localparam SOLDAMJ   = 8;  astyanax
+//localparam EDFP      = 9;  phantasm
+//localparam INYOURF   = 10; phantasm
 //localparam STDRAGON  = 11; phantasm
 //localparam STDRAGONA = 12; phantasm
+//localparam HACHOO    = 13; astyanax
 //localparam IGANINJU  = 15; phantasm
 
 function [15:0] cpu_decode(input [23:0] i, input [15:0] d);
@@ -917,7 +923,7 @@ begin
         end else begin
             cpu_decode = d;
         end
-    end else if ( pcb == 4 || pcb == 6 || pcb == 8 ) begin
+    end else if ( pcb == 4 || pcb == 6 || pcb == 8 || pcb == 13 ) begin
         // astyanax
         if          ( i < 20'h04000 ) begin
             cpu_decode = ( i[8] & i[5] & i[2] ) ? swap_11( d ) : swap_10( d );
@@ -1393,7 +1399,7 @@ always @ (posedge clk_sys) begin
                     write_done_p <= 1 ;
 
                     // mcu handling 
-                    if ( pcb == ASTYANAX && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
+                    if ( pcb == ASTYANAX || pcb == HACHOO && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
                         if (mcu_ram[0] == 16'h00ff && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h0000 ) begin
                             mcu_en <= 1 ;
                         end else begin
@@ -1498,8 +1504,8 @@ always @ (posedge clk_sys) begin
                 m68ks_din <= m68ks_rom_cs    ? m68ks_rom_dout :
                              m68ks_ram_cs    ? m68ks_ram_dout :
                              m68ks_latch0_cs ? m68kp_latch0   :
-                             m68ks_oki0_cs   ? { 8'h00, ( ( pcb == BLANK ) ?  oki0_dout : 8'h00 ) } : // oki0_dout
-                             m68ks_oki1_cs   ? { 8'h00, ( ( pcb == BLANK ) ?  oki1_dout : 8'h00 ) } : // oki1_dout
+                             m68ks_oki0_cs   ? { 8'h00, ( ( pcb == HACHOO ) ?  oki0_dout : 8'h00 ) } : // oki0_dout
+                             m68ks_oki1_cs   ? { 8'h00, ( ( pcb == HACHOO ) ?  oki1_dout : 8'h00 ) } : // oki1_dout
                              m68ks_ym2151_cs ? { 8'h00, ym2151_dout } :
                              16'h0000;
             end else begin
@@ -1536,7 +1542,7 @@ end                // always
 // mcu hack
 always @ * begin
     mcu_rom = m68kp_rom_dout;
-    if ( pcb == ASTYANAX ) begin
+    if ( pcb == ASTYANAX || pcb == HACHOO ) begin
         if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h03FFC0 && m68kp_a[23:0] < 24'h040000 ) begin
             mcu_rom = 16'h889e;
         end

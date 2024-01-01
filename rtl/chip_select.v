@@ -74,8 +74,11 @@ localparam RODLANDJ  = 4;
 localparam ASTYANAX  = 6;
 localparam SOLDAM    = 7;
 localparam SOLDAMJ   = 8;
+localparam EDFP      = 9;
+localparam INYOURF   = 10;
 localparam STDRAGON  = 11;
 localparam STDRAGONA = 12;
+localparam HACHOO    = 13;
 localparam IGANINJU  = 15;
 
 always @ (*) begin
