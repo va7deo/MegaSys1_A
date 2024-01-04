@@ -447,7 +447,7 @@ reg        unknown_0;
 reg        unknown_1;
 reg        unknown_2;
 
-always @ * begin
+always @ (posedge clk_sys) begin
     p1_swap <= status[49];
 
         if ( status[49] == 0 ) begin
@@ -489,7 +489,7 @@ always @ * begin
     end
 end
 
-always @ * begin
+always @ (posedge clk_sys) begin
     service   <= key_service;
 
     b_pause   <= joy0[12] | joy1[12] | key_pause;
@@ -607,19 +607,19 @@ always @ (posedge clk_sys) begin
     end
 
     // clocks below change to fractional divider
-    clk_cpu_s <= ( clk_cpu_count == 0 );
-    if ( clk_cpu_count == 4 ) begin  // 4
-        clk_cpu_count <= 0;
-    end else if ( pause_cpu == 0 ) begin
-        clk_cpu_count <= clk_cpu_count + 1;
-    end
+    // clk_cpu_s <= ( clk_cpu_count == 0 );
+    // if ( clk_cpu_count == 4 ) begin  // 4
+    //    clk_cpu_count <= 0;
+    // end else if ( pause_cpu == 0 ) begin
+    //    clk_cpu_count <= clk_cpu_count + 1;
+    // end
 
     // 14MHz
     // M = 7 / N = 36
 //    clk_cpu_s <= 0;
 //    if ( clk_cpu_count > 35 ) begin
 //        clk_cpu_s <= 1;
-//        clk_cpu_count <= clk_cpu_count - 28;
+//        clk_cpu_count <= clk_cpu_count - 29;
 //    end else begin
 //        clk_cpu_count <= clk_cpu_count + 7;
 //    end
@@ -760,7 +760,7 @@ arcade_video #(256,24) arcade_video
     assign PALFLAG = status[7];
 `endif
 
-wire flip;
+wire flip = 0;
 
 screen_rotate screen_rotate
 (
@@ -1154,6 +1154,7 @@ reg  m68ks_vpa_n;
 reg  m68ks_ipl0_n;
 reg  m68ks_ipl1_n;
 reg  m68ks_ipl2_n;
+reg  latch_irq_n ;
 
 reg fx68s_phi1;
 
@@ -1161,10 +1162,15 @@ always @(posedge clk_sys) begin
     if ( clk_cpu_s == 1 ) begin
         fx68s_phi1 <= ~fx68s_phi1;
     end
+	
+	soft_reset <= screen_control[4];
+	dip_flip <= screen_control[0];				   
 end
 
 // sound ICs and sound cpu are resetable via latch
-wire soft_reset = screen_control[4];
+
+reg soft_reset ;
+reg dip_flip ;
 
 fx68k sound_cpu
 (
@@ -1199,7 +1205,7 @@ fx68k sound_cpu
 
     .IPL0n(m68ks_ipl0_n),
     .IPL1n(m68ks_ipl1_n),
-    .IPL2n(ym2151_irq_n), // m68ks_ipl2_n
+    .IPL2n(ym2151_irq_n & latch_irq_n ), // m68ks_ipl2_n
 
     // busses
     .iEdb(m68ks_din),
@@ -1311,6 +1317,7 @@ always @ (posedge clk_sys) begin
         m68ks_ipl0_n <= 1;
         m68ks_ipl1_n <= 1;
         m68ks_ipl2_n <= 1;
+        latch_irq_n  <= 1;
 
         m68kp_scr0_reg_x <= 0;
         m68kp_scr0_reg_y <= 0;
@@ -1432,6 +1439,9 @@ always @ (posedge clk_sys) begin
                     if ( m68kp_latch0_cs == 1 ) begin
                         // sound latch
                         m68kp_latch0 <= m68kp_dout;
+                        // assert irq 4 on sound cpu 
+                        // some games disable interrupts on audio cpu with the interrupt mask
+                        latch_irq_n <= 0 ;
                     end
                     
                     if ( m68kp_spr_ctrl_cs == 1 ) begin
@@ -1492,6 +1502,10 @@ always @ (posedge clk_sys) begin
         
         if ( clk_cpu_s == 1 ) begin
         
+            if ( m68ks_as_n == 0 && m68ks_fc == 3'b111 ) begin
+                latch_irq_n <= 1;
+            end
+            
             if ( m68kp_as_n == 1 ) begin
                 write_done_s <= 0;
             end
@@ -1655,21 +1669,23 @@ end
 // data in is latched on falling wrn
 jt6295 #(.INTERPOL(0)) oki_0
 (
-    .rst( reset | soft_reset ),
-    .clk( clk_sys            ),
-    .cen( clk_4M             ),
-    .ss( 1'b1                ),
+    .rst( reset | soft_reset                     ),
+    .clk( clk_sys                                ),
+    .cen( clk_4M                                 ),
+    .ss( 1'b1                                    ),
     // CPU interface
-    .wrn( ~oki0_w            ), //  active low
-    .din( oki0_din           ),
-    .dout( oki0_dout         ),
+    // .wrn( ~oki0_w                             ), //  active low
+    // .din( oki0_din                            ),
+    .wrn( m68ks_as_n | m68ks_rw | !m68ks_oki0_cs ), //  active low  ~oki0_w
+    .din( m68ks_dout[7:0]                        ), // oki0_din
+    .dout( oki0_dout                             ),
     // ROM interface
-    .rom_addr( oki0_rom_addr ),
-    .rom_data( oki0_data     ),
-    .rom_ok( oki0_rom_done   ),
+    .rom_addr( oki0_rom_addr                     ),
+    .rom_data( oki0_data                         ),
+    .rom_ok( oki0_rom_done                       ),
     // Sound output
-    .sound( oki0_sample      ),
-    .sample( oki0_sample_clk )
+    .sound( oki0_sample                          ),
+    .sample( oki0_sample_clk                     )
 );
 
 reg   [7:0] oki1_din;
@@ -1684,21 +1700,23 @@ wire        oki1_sample_clk;
 
 jt6295 #(.INTERPOL(0)) oki_1
 (
-    .rst( reset | soft_reset ),
-    .clk( clk_sys            ),
-    .cen( clk_4M             ),
-    .ss( 1'b1                ),
+    .rst( reset | soft_reset                     ),
+    .clk( clk_sys                                ),
+    .cen( clk_4M                                 ),
+    .ss( 1'b1                                    ),
     // CPU interface
-    .wrn( ~oki1_w            ), //  active low
-    .din( oki1_din           ),
-    .dout( oki1_dout         ),
+    // .wrn( ~oki1_w            ), //  active low
+    // .din( oki1_din           ),
+    .wrn( m68ks_as_n | m68ks_rw | !m68ks_oki1_cs ), //  active low  ~oki0_w
+    .din( m68ks_dout[7:0]                        ), // oki0_din
+    .dout( oki1_dout                             ),
     // ROM interface
-    .rom_addr( oki1_rom_addr ),
-    .rom_data( oki1_data     ),
-    .rom_ok( oki1_rom_done   ),
+    .rom_addr( oki1_rom_addr                     ),
+    .rom_data( oki1_data                         ),
+    .rom_ok( oki1_rom_done                       ),
     // Sound output
-    .sound( oki1_sample      ),
-    .sample( oki1_sample_clk )
+    .sound( oki1_sample                          ),
+    .sample( oki1_sample_clk                     )
 );
 
 //wire      audio_en   = status[11];       // audio enable
@@ -1865,11 +1883,12 @@ wire [15:0] scroll0_x = scroll_x_pos + m68kp_scr0_reg_x;
 wire [15:0] scroll1_x = scroll_x_pos + m68kp_scr1_reg_x;
 wire [15:0] scroll2_x = scroll_x_pos + m68kp_scr2_reg_x;
 
-wire [15:0] scroll0_y = vc + m68kp_scr0_reg_y;
-wire [15:0] scroll1_y = vc + m68kp_scr1_reg_y;
-wire [15:0] scroll2_y = vc + m68kp_scr2_reg_y;
+wire [15:0] scroll0_y = ( dip_flip == 0 ? vc : 255 - vc ) + m68kp_scr0_reg_y;
+wire [15:0] scroll1_y = ( dip_flip == 0 ? vc : 255 - vc ) + m68kp_scr1_reg_y;
+wire [15:0] scroll2_y = ( dip_flip == 0 ? vc : 255 - vc ) + m68kp_scr2_reg_y;
 
 // todo: **** refactor so each scroll layer is a module
+// ( dip_flip == 0 )
 
 reg   [2:0] layer_idx;
 reg  [19:0] layer_prom; /// [0:15] = '{20'h04132, 20'h02413, 20'h03142};
@@ -2285,7 +2304,8 @@ reg   [3:0] spr_x;
 //reg   [3:0] pen;
 //reg         pen_valid;
 
-wire [8:0] fb_vc = vc[7:0] - 1; //+ 8'h10;
+// wire [8:0] fb_vc = vc[7:0] - 1; //+ 8'h10;
+wire [8:0] fb_vc = ( dip_flip == 0 ? ( vc[7:0] - 1 ) : ( 255 - vc[7:0] + 1 ) ) ; //+ 8'h10;
 
 reg  [3:0] sprite_priority_hi;
 reg  [3:0] sprite_priority_lo;
@@ -2294,10 +2314,12 @@ always @ (posedge clk_sys) begin
 
     if ( vc < 242 ) begin
         if ( clk6_count == 2 ) begin
-            line_buf_addr_r <= { vc[0], 1'b0, hc[7:0] };
+            // line_buf_addr_r <= { vc[0], 1'b0, hc[7:0] };
+            line_buf_addr_r <= { vc[0], 1'b0, ( dip_flip == 0 ) ? hc[7:0] : ( 8'hff - hc[7:0]) };
         end else if ( clk6_count == 3 ) begin
             // line_buf_addr_r valid
-            framebuf_addr_r <= { fb_vc, hc[7:0]  };
+           //  framebuf_addr_r <= { fb_vc, hc[7:0]  };
+            framebuf_addr_r <= { fb_vc, ( dip_flip == 0 ) ? hc[7:0] : ( 8'hff - hc[7:0])  };
         end else if ( clk6_count == 4 ) begin
             case (4'h3)
                 layer_prom[3:0]   : sprite_priority_hi <= 4;
