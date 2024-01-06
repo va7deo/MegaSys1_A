@@ -356,8 +356,9 @@ localparam INYOURF   = 10;
 localparam STDRAGON  = 11;
 localparam STDRAGONA = 12;
 localparam HACHOO    = 13;
+localparam PLUSALPH  = 14;
 localparam IGANINJU  = 15;
-localparam BLANK     = 99;
+localparam JITSUPRO  = 16;
 
 reg [23:0] prom [0:15];
 
@@ -450,7 +451,7 @@ reg        unknown_2;
 always @ (posedge clk_sys) begin
     p1_swap <= status[49];
 
-        if ( status[49] == 0 ) begin
+    if ( status[49] == 0 ) begin
         p1_right   <= joy0[0]   | key_p1_right;
         p1_left    <= joy0[1]   | key_p1_left;
         p1_down    <= joy0[2]   | key_p1_down;
@@ -616,13 +617,13 @@ always @ (posedge clk_sys) begin
 
     // 14MHz
     // M = 7 / N = 36
-//    clk_cpu_s <= 0;
-//    if ( clk_cpu_count > 35 ) begin
-//        clk_cpu_s <= 1;
-//        clk_cpu_count <= clk_cpu_count - 29;
-//    end else begin
-//        clk_cpu_count <= clk_cpu_count + 7;
-//    end
+    clk_cpu_s <= 0;
+    if ( clk_cpu_count > 35 ) begin
+        clk_cpu_s <= 1;
+        clk_cpu_count <= clk_cpu_count - 29;
+    end else begin
+        clk_cpu_count <= clk_cpu_count + 7;
+    end
 
     // M = 7 / N = 144
 //    clk_3_5M <= 0;
@@ -901,7 +902,9 @@ endfunction
 //localparam STDRAGON  = 11; phantasm
 //localparam STDRAGONA = 12; phantasm
 //localparam HACHOO    = 13; astyanax
+//localparam PLUSALPH  = 14; astyanax
 //localparam IGANINJU  = 15; phantasm
+//localparam JITSUPRO  = 16; astyanax
 
 function [15:0] cpu_decode(input [23:0] i, input [15:0] d);
 begin
@@ -923,7 +926,7 @@ begin
         end else begin
             cpu_decode = d;
         end
-    end else if ( pcb == 4 || pcb == 6 || pcb == 8 || pcb == 13 ) begin
+    end else if ( pcb == 4 || pcb == 6 || pcb == 8 || pcb == 13 || pcb == 14 || pcb == 16 ) begin
         // astyanax
         if          ( i < 20'h04000 ) begin
             cpu_decode = ( i[8] & i[5] & i[2] ) ? swap_11( d ) : swap_10( d );
@@ -1012,6 +1015,11 @@ always @ (posedge clk_sys) begin
             download_addr <=  26'h280000 | sprite_decode_ioctl_addr;  // stdragona
             // 3,7,5,6,4,2,1,0
             download_data <= { ioctl_dout[3], ioctl_dout[7], ioctl_dout[5], ioctl_dout[6], ioctl_dout[4], ioctl_dout[2:0] };
+        end else if ( pcb == JITSUPRO ) begin
+            // TODO: ioctl address needs ofset corrected before the address decode is done
+            download_addr <=  26'h280000 | sprite_decode_ioctl_addr;  // jitsupro
+            // rom[i] = bitswap<8>(rom[i], 0x4, 0x3, 0x5, 0x7, 0x6, 0x2, 0x1, 0x0);
+            download_data <= { ioctl_dout[4], ioctl_dout[3], ioctl_dout[5], ioctl_dout[7], ioctl_dout[6], ioctl_dout[2:0] };
         end else begin
             download_addr <= sprite_ioctl_addr;
             download_data <= ioctl_dout;
@@ -1041,6 +1049,11 @@ always @ (posedge clk_sys) begin
             // TODO: ioctl address needs ofset corrected before the address decode is done
             download_addr <=  26'h400000 | sprite_decode_ioctl_addr;  // stdragona
             download_data <= { ioctl_dout[3], ioctl_dout[7], ioctl_dout[5], ioctl_dout[6], ioctl_dout[4], ioctl_dout[2:0] };
+        end else if ( pcb == JITSUPRO ) begin
+            // TODO: ioctl address needs ofset corrected before the address decode is done
+            download_addr <=  26'h400000 | sprite_decode_ioctl_addr;  // stdragona
+            // 0x4, 0x3, 0x5, 0x7, 0x6, 0x2, 0x1, 0x0);
+            download_data <= { ioctl_dout[4], ioctl_dout[3], ioctl_dout[5], ioctl_dout[7], ioctl_dout[6], ioctl_dout[2:0] };
         end else begin
             download_addr <= sprite_ioctl_addr;
             download_data <= ioctl_dout;
@@ -1164,7 +1177,7 @@ always @(posedge clk_sys) begin
     end
 	
 	soft_reset <= screen_control[4];
-	dip_flip <= screen_control[0];				   
+	dip_flip <= screen_control[0];
 end
 
 // sound ICs and sound cpu are resetable via latch
@@ -1406,7 +1419,7 @@ always @ (posedge clk_sys) begin
                     write_done_p <= 1 ;
 
                     // mcu handling 
-                    if ( pcb == ASTYANAX || pcb == HACHOO && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
+                    if ( pcb == ASTYANAX || pcb == HACHOO || pcb == PLUSALPH || pcb == JITSUPRO && m68kp_rom_cs == 1 && m68kp_a[19:16] == 4'h2 ) begin
                         if (mcu_ram[0] == 16'h00ff && mcu_ram[1] == 16'h0055 && mcu_ram[2] == 16'h00aa && mcu_ram[3] == 16'h0000 ) begin
                             mcu_en <= 1 ;
                         end else begin
@@ -1538,15 +1551,15 @@ always @ (posedge clk_sys) begin
                         ym2151_w <= 1;
                     end
                     
-                    if ( m68ks_oki0_cs == 1 && m68ks_as_n == 0) begin
-                        oki0_din <= m68ks_dout[7:0];
-                        oki0_w <= 1;
-                    end
+                    // if ( m68ks_oki0_cs == 1 && m68ks_as_n == 0) begin
+                    //    oki0_din <= m68ks_dout[7:0];
+                    //    oki0_w <= 1;
+                    // end
                     
-                    if ( m68ks_oki1_cs == 1 && m68ks_as_n == 0) begin
-                        oki1_din <= m68ks_dout[7:0];
-                        oki1_w <= 1;
-                    end
+                    // if ( m68ks_oki1_cs == 1 && m68ks_as_n == 0) begin
+                    //    oki1_din <= m68ks_dout[7:0];
+                    //    oki1_w <= 1;
+                    // end
                 end
             end
         end        // clk_cpu_s
@@ -1556,7 +1569,7 @@ end                // always
 // mcu hack
 always @ * begin
     mcu_rom = m68kp_rom_dout;
-    if ( pcb == ASTYANAX || pcb == HACHOO ) begin
+    if ( pcb == ASTYANAX || pcb == HACHOO || pcb == PLUSALPH || pcb == JITSUPRO ) begin
         if ( mcu_en == 1 && m68kp_a[23:0] >= 24'h03FFC0 && m68kp_a[23:0] < 24'h040000 ) begin
             mcu_rom = 16'h889e;
         end

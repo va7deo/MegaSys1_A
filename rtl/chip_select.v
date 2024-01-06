@@ -79,7 +79,9 @@ localparam INYOURF   = 10;
 localparam STDRAGON  = 11;
 localparam STDRAGONA = 12;
 localparam HACHOO    = 13;
+localparam PLUSALPH  = 14;
 localparam IGANINJU  = 15;
+localparam JITSUPRO  = 16;
 
 always @ (*) begin
     // Memory mapping based on PCB type
