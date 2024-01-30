@@ -348,6 +348,7 @@ localparam P47       = 0;
 localparam PHANTASM  = 2;
 localparam RODLAND   = 3;
 localparam RODLANDJ  = 4;
+localparam SHINGEN   = 5;
 localparam ASTYANAX  = 6;
 localparam SOLDAM    = 7;
 localparam SOLDAMJ   = 8;
@@ -894,6 +895,7 @@ endfunction
 //localparam PHANTASM  = 2;  phantasm
 //localparam RODLAND   = 3;  rodland
 //localparam RODLANDJ  = 4;  astyanax
+//localparam SHINGEN   = 5;  phantasm
 //localparam ASTYANAX  = 6;  astyanax
 //localparam SOLDAM    = 7;  phantasm
 //localparam SOLDAMJ   = 8;  astyanax
@@ -1218,7 +1220,7 @@ fx68k sound_cpu
 
     .IPL0n(m68ks_ipl0_n),
     .IPL1n(m68ks_ipl1_n),
-    .IPL2n(ym2151_irq_n & latch_irq_n ), // m68ks_ipl2_n
+    .IPL2n(ym2151_irq_n & latch_irq_n), // m68ks_ipl2_n
 
     // busses
     .iEdb(m68ks_din),

@@ -71,6 +71,7 @@ localparam P47       = 0;
 localparam PHANTASM  = 2;
 localparam RODLAND   = 3;
 localparam RODLANDJ  = 4;
+localparam SHINGEN   = 5;
 localparam ASTYANAX  = 6;
 localparam SOLDAM    = 7;
 localparam SOLDAMJ   = 8;
